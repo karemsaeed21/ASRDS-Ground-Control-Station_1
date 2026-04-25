@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane stylesheets="@military-dark.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="app.groundstation.HelloController">
+
+   <!-- ═══════════════════════ CENTER ═══════════════════════════════════════════ -->
+   <center>
+      <VBox styleClass="bg-hud" BorderPane.alignment="CENTER">
+
+         <!-- Map fills all available vertical space -->
+         <AnchorPane fx:id="MapContainer" VBox.vgrow="ALWAYS" />
+
+         <!-- ─── Bottom strip ────────────────────────────────────────────────── -->
+         <HBox styleClass="bg-armored" prefHeight="195.0" spacing="0">
+
+            <!-- Connection state panel -->
+            <VBox prefWidth="370.0" style="-fx-padding: 14 16 10 16;" styleClass="bg-armored" spacing="6">
+               <Label styleClass="label-header" text="CONNECTION STATE">
+                  <font><Font size="14.0" /></font>
+                  <padding><Insets bottom="6.0" /></padding>
+               </Label>
+
+               <!-- Transmitter row (static) -->
+               <HBox alignment="CENTER_LEFT" spacing="8" prefHeight="40.0">
+                  <Label prefWidth="100.0" styleClass="label-code" text="Transmitter">
+                     <font><Font size="12.0" /></font>
+                  </Label>
+                  <Label alignment="CENTER" prefWidth="106.0"
+                         style="-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-padding: 3 6;"
+                         text="Connected">
+                     <font><Font size="12.0" /></font>
+                  </Label>
+                  <Button disable="true" mnemonicParsing="false" styleClass="btn-ghost" text="Connect">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+               </HBox>
+
+               <!-- Drone row -->
+               <HBox alignment="CENTER_LEFT" spacing="8" prefHeight="40.0">
+                  <Label prefWidth="100.0" styleClass="label-code" text="Drone">
+                     <font><Font size="12.0" /></font>
+                  </Label>
+                  <Label fx:id="droneStatusLabel" alignment="CENTER" prefWidth="106.0"
+                         style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-padding: 3 6;"
+                         text="Disconnected">
+                     <font><Font size="12.0" /></font>
+                  </Label>
+                  <Button fx:id="droneConnectButton" mnemonicParsing="false"
+                          onAction="#toggleDroneConnection" styleClass="btn-danger" text="Connect">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+                  <Button fx:id="droneSimulateButton" mnemonicParsing="false"
+                          onAction="#toggleDroneSimulate" styleClass="btn-ghost" text="Simulate">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+               </HBox>
+            </VBox>
+
+            <!-- Vertical divider -->
+            <Separator orientation="VERTICAL" style="-fx-padding: 0;" />
+
+            <!-- Coordinates panel -->
+            <VBox HBox.hgrow="ALWAYS" style="-fx-padding: 12 16 10 16;" styleClass="bg-armored" spacing="4">
+               <Label styleClass="label-header" text="SEARCH AREA COORDINATES">
+                  <font><Font size="14.0" /></font>
+                  <padding><Insets bottom="6.0" /></padding>
+               </Label>
+
+               <!-- Row 1: X1 + X2 -->
+               <HBox spacing="16" alignment="CENTER_LEFT">
+                  <HBox spacing="6" alignment="CENTER_LEFT">
+                     <Label styleClass="label-code" text="X1" minWidth="20"><font><Font size="12.0"/></font></Label>
+                     <TextField fx:id="x1_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
+                     <TextField fx:id="x1_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <Button fx:id="x1_listen_button" onAction="#setX1ListenMode" prefWidth="60" prefHeight="32" text="Listen">
+                        <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
+                        <font><Font size="11.0"/></font>
+                     </Button>
+                  </HBox>
+                  <HBox spacing="6" alignment="CENTER_LEFT">
+                     <Label styleClass="label-code" text="X2" minWidth="20"><font><Font size="12.0"/></font></Label>
+                     <TextField fx:id="x2_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
+                     <TextField fx:id="x2_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <Button fx:id="x2_listen_button" onAction="#setX2ListenMode" prefWidth="60" prefHeight="32" text="Listen">
+                        <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
+                        <font><Font size="11.0"/></font>
+                     </Button>
+                  </HBox>
+               </HBox>
+
+               <!-- Row 2: X3 + X4 -->
+               <HBox spacing="16" alignment="CENTER_LEFT">
+                  <HBox spacing="6" alignment="CENTER_LEFT">
+                     <Label styleClass="label-code" text="X3" minWidth="20"><font><Font size="12.0"/></font></Label>
+                     <TextField fx:id="x3_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
+                     <TextField fx:id="x3_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <Button fx:id="x3_listen_button" onAction="#setX3ListenMode" prefWidth="60" prefHeight="32" text="Listen">
+                        <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
+                        <font><Font size="11.0"/></font>
+                     </Button>
+                  </HBox>
+                  <HBox spacing="6" alignment="CENTER_LEFT">
+                     <Label styleClass="label-code" text="X4" minWidth="20"><font><Font size="12.0"/></font></Label>
+                     <TextField fx:id="x4_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
+                     <TextField fx:id="x4_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <Button fx:id="x4_listen_button" onAction="#setX4ListenMode" prefWidth="60" prefHeight="32" text="Listen">
+                        <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
+                        <font><Font size="11.0"/></font>
+                     </Button>
+                  </HBox>
+               </HBox>
+
+               <!-- Action row -->
+               <HBox spacing="8" alignment="CENTER_LEFT">
+                  <Button fx:id="DrowButton" mnemonicParsing="false" onAction="#updateCordinates"
+                          prefHeight="34.0" prefWidth="160.0" styleClass="btn-primary" text="Set Search Area">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+                  <Button fx:id="ClearButton" mnemonicParsing="false" onAction="#clearCordinates"
+                          prefHeight="34.0" prefWidth="160.0" styleClass="btn-ghost" text="Clear Search Area">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+               </HBox>
+            </VBox>
+
+         </HBox>
+      </VBox>
+   </center>
+
+   <!-- ═══════════════════════ RIGHT: telemetry sidebar ════════════════════════ -->
+   <right>
+      <VBox prefWidth="290.0" styleClass="telemetry-panel" BorderPane.alignment="CENTER">
+         <padding><Insets top="20" right="16" bottom="16" left="16" /></padding>
+
+         <!-- ── TELEMETRY ─────────────────────────────────────────────────── -->
+         <Label styleClass="section-title" text="▶  TELEMETRY" />
+         <Region prefHeight="12" />
+
+         <HBox styleClass="data-row" alignment="CENTER_LEFT">
+            <Label styleClass="data-key" text="LATITUDE" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="latValueLabel" styleClass="data-value" text="---" />
+         </HBox>
+         <HBox styleClass="data-row" alignment="CENTER_LEFT">
+            <Label styleClass="data-key" text="LONGITUDE" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="lonValueLabel" styleClass="data-value" text="---" />
+         </HBox>
+         <HBox styleClass="data-row" alignment="CENTER_LEFT">
+            <Label styleClass="data-key" text="ALTITUDE" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="altValueLabel" styleClass="data-value" text="---" />
+         </HBox>
+
+         <Region prefHeight="10" />
+
+         <!-- Battery -->
+         <HBox alignment="CENTER_LEFT" spacing="6">
+            <Label styleClass="data-key" text="BATTERY" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="batteryValueLabel" styleClass="data-value" text="---" />
+         </HBox>
+         <Region prefHeight="6" />
+         <ProgressBar fx:id="batteryBar" maxWidth="Infinity" prefHeight="12"
+                      progress="0" styleClass="battery-bar" />
+
+         <Region prefHeight="20" />
+         <Separator styleClass="divider-glow" />
+         <Region prefHeight="20" />
+
+         <!-- ── FLIGHT PATH ────────────────────────────────────────────────── -->
+         <Label styleClass="section-title" text="▶  FLIGHT PATH" />
+         <Region prefHeight="12" />
+
+         <HBox styleClass="data-row" alignment="CENTER_LEFT">
+            <Label styleClass="data-key" text="RECORDED" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="pathPointsLabel" styleClass="data-value" text="0 pts" />
+         </HBox>
+         <Region prefHeight="8" />
+         <Button fx:id="clearPathButton" mnemonicParsing="false" onAction="#clearDronePath"
+                 maxWidth="Infinity" prefHeight="32" styleClass="btn-ghost" text="CLEAR PATH">
+            <font><Font size="12.0" /></font>
+         </Button>
+
+         <Region prefHeight="20" />
+         <Separator styleClass="divider-glow" />
+         <Region prefHeight="20" />
+
+         <!-- ── MISSION AREA ───────────────────────────────────────────────── -->
+         <Label styleClass="section-title" text="▶  MISSION AREA" />
+         <Region prefHeight="12" />
+
+         <HBox styleClass="data-row" alignment="CENTER_LEFT">
+            <Label styleClass="data-key" text="STATUS" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="missionStatusLabel" styleClass="data-value-warn" text="NOT SENT" />
+         </HBox>
+         <Region prefHeight="8" />
+         <Button fx:id="sendMissionButton" mnemonicParsing="false" onAction="#sendMissionArea"
+                 disable="true" maxWidth="Infinity" prefHeight="34" styleClass="btn-primary"
+                 text="SEND MISSION AREA">
+            <font><Font size="12.0" /></font>
+         </Button>
+
+         <!-- Push build info to bottom -->
+         <Region VBox.vgrow="ALWAYS" />
+         <Separator styleClass="divider-glow" />
+         <Region prefHeight="10" />
+         <Label styleClass="data-key" text="ASRDS GROUND CONTROL  v1.0" />
+         <Label styleClass="data-key" text="115200 BAUD  ·  POS PROTOCOL" />
+
+      </VBox>
+   </right>
+
+</BorderPane>

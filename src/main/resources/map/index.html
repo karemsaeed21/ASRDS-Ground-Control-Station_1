@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Viewer</title>
+    <link rel="stylesheet" href="./leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div id="map"></div>
+<div class="cordenates">
+    Latitude: <span  id="lat">51.505</span>,<span id="long"> Longitude: -0.09</span>
+</div>
+<script src="./leaflet/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map', {
+    center: [51.505, -0.09],
+    zoom: 13
+});
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17,
+   
+}).addTo(map);
+
+map.addEventListener('mousemove', function(e) {
+//    console.log(e.latlng);
+    let long,lat;
+    lat = e.latlng.lat.toFixed(5);
+    long = e.latlng.lng.toFixed(5);
+
+    document.getElementById('lat').innerText = lat;
+    document.getElementById('long').innerText = long;
+
+    // app.setTest(Number(lat),Number(long));
+
+
+});
+
+
+map.addEventListener('click', function(e) {
+
+    let long,lat;
+    lat = e.latlng.lat.toFixed(5);
+    long = e.latlng.lng.toFixed(5);
+
+    
+    console.log("Map clicked"); // Check if this even runs
+    try {
+        app.Test(lat);
+    } catch (error) {
+        alert("JS Error: " + error.message);
+    }
+
+
+});
+
+
+function drow_polygone(coords) {
+    var polygon = L.polygon(coords, {color: 'red'}).addTo(map);
+    map.fitBounds(polygon.getBounds());
+    
+}
+
+
+
+// // Example usage:
+// var coords = [
+//     [51.527, -0.116],
+//     [51.481, -0.1143],
+//     [51.482, -0.00824],
+    
+//     [51.527, -0.01202],
+// ];
+// drow_polygone(coords);
+</script>
+</body>
+</html>

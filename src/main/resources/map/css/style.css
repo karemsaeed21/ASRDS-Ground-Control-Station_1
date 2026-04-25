@@ -1,0 +1,26 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    position: relative;
+   
+}
+
+#map{
+    height: 100vh;
+}
+
+.cordenates{
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 50%;
+    background: white;
+    font-weight: bold;
+    font-size: 22px;
+    transform: translate(-50%, 0%);
+    
+}

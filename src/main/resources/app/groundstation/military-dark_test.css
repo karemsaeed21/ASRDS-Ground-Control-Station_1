@@ -1,0 +1,360 @@
+/* ==========================================================================
+   ROOT VARIABLES (Enhanced with Standard JavaFX CSS)
+   ========================================================================== */
+.root {
+    /* Base Palette - Using direct colors since CSS variables aren't supported */
+    -fx-tactical-black: #121212;
+    -fx-gunmetal: #2b2b2b;
+    -fx-olive-drab: #4b5320;
+    -fx-military-green: #354f33;
+    -fx-coyote-brown: #826e49;
+
+    /* Accents */
+    -fx-caution-yellow: #ffcc00;
+    -fx-danger-red: #8B0000;
+
+    /* Text */
+    -fx-text-primary: #e0e0e0;
+    -fx-text-secondary: #b0b0b0;
+    -fx-text-muted: #888888;
+    -fx-text-highlight: #ffcc00;
+
+    /* Font */
+    -fx-font-family: "Courier New", "Consolas", "Monaco", Monospace;
+}
+
+/* ==========================================================================
+   MAIN BACKGROUND OPTIONS (Fixed for JavaFX Compatibility)
+   ========================================================================== */
+.bg-armored {
+    -fx-background-color: #121212;
+    -fx-border-color: #2b2b2b;
+    -fx-border-width: 4px;
+    /* Background images must use url() syntax */
+    /* -fx-background-image: url("./pattern_camo.png"); */
+    -fx-background-repeat: repeat; /* Tiles the image */
+    -fx-background-size: auto;
+    -fx-background-size: 200px 200px;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.8), 15, 0.5, 0, 0);
+}
+
+.bg-tactical {
+    -fx-background-color: linear-gradient(to bottom right, #121212, #354f33);
+}
+
+.bg-hud {
+    -fx-background-color: #121212a4;
+    -fx-border-width: 0 0 1 0;
+    /* -fx-border-color: linear-gradient(to right, transparent, #4b5320, transparent); */
+}
+
+/* Scanline effect using a separate style class */
+.bg-hud.scanlines {
+    -fx-background-color: linear-gradient(to bottom,
+        transparent 0%, transparent 96%,
+        rgba(75, 83, 32, 0.1) 96%, rgba(75, 83, 32, 0.1) 100%
+    ), #121212;
+    -fx-background-size: 100% 4px;
+}
+
+/* ==========================================================================
+   ADVANCED PANEL SYSTEM (JavaFX Compatible)
+   ========================================================================== */
+
+/* Base Panel */
+.panel-base {
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-padding: 15px;
+    -fx-background-color: rgba(18, 18, 18, 0.8);
+    -fx-border-color: #2b2b2b;
+    -fx-border-width: 1px;
+}
+
+/* 1. HUD Panel */
+.panel-hud {
+    -fx-background-color: rgba(18, 18, 18, 0.8);
+    -fx-border-color: #354f33;
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(53, 79, 51, 0.5), 25, 0.3, 0, 0);
+}
+
+.panel-hud:hover {
+    -fx-border-color: rgba(255, 204, 0, 0.3);
+    -fx-effect: dropshadow(gaussian, rgba(53, 79, 51, 0.7), 35, 0.5, 0, 0);
+}
+
+/* 2. Indented Monitor */
+.panel-indented {
+    -fx-background-color: #121212;
+    -fx-padding: 10px;
+    -fx-border-color: #2b2b2b;
+    -fx-border-width: 2px;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.8), 20, 0.5, 2, 2);
+}
+
+/* 3. Alert Panel */
+.panel-alert {
+    -fx-background-color: rgba(139, 0, 0, 0.15);
+    -fx-border-color: #8B0000;
+    -fx-border-width: 2px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-padding: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(139, 0, 0, 0.5), 30, 0.7, 0, 0);
+}
+
+/* 4. Data Panel with Grid */
+.panel-data {
+    -fx-background-color: rgba(18, 18, 18, 0.6);
+    -fx-border-color: #4b5320;
+    -fx-border-width: 1px;
+    -fx-background-radius: 3px;
+    -fx-border-radius: 3px;
+    -fx-padding: 10px;
+}
+
+/* 5. Terminal Panel */
+.panel-terminal {
+    -fx-background-color: rgba(18, 18, 18, 0.95);
+    -fx-border-color: rgba(255, 204, 0, 0.3);
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM (Fixed Effects)
+   ========================================================================== */
+
+.button {
+    -fx-background-radius: 3px;
+    -fx-border-radius: 3px;
+
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-text-fill: #e0e0e0;
+}
+
+/* Primary Button */
+.btn-primary {
+    -fx-background-color: linear-gradient(to bottom, #4b5320, #3d4720);
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #5d662b;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 5, 0, 0, 2);
+}
+
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to bottom, #5d662b, #4b5320);
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #6e7730;
+    -fx-effect: dropshadow(gaussian, rgba(93, 102, 43, 0.8), 15, 0.5, 0, 0);
+}
+
+.btn-primary:pressed {
+    -fx-background-color: linear-gradient(to bottom, #3d4720, #2b3520);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 3, 0, 0, 1);
+}
+
+/* Caution Button */
+.btn-caution {
+    -fx-background-color: linear-gradient(to bottom, #ffcc00, #e6b800);
+    -fx-text-fill: #121212;
+    -fx-border-color: #cc9900;
+    -fx-border-width: 2px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(gaussian, rgba(255, 204, 0, 0.4), 15, 0.5, 0, 0);
+}
+
+.btn-caution:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffd633, #ffcc00);
+    -fx-effect: dropshadow(gaussian, rgba(255, 204, 0, 0.6), 20, 0.7, 0, 0);
+}
+
+/* Ghost Button */
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #354f33;
+    -fx-border-color: #354f33;
+    -fx-border-width: 2px;
+}
+
+.btn-ghost:hover {
+    -fx-background-color: rgba(53, 79, 51, 0.15);
+    -fx-text-fill: #d4e2d4;
+    -fx-border-color: #4a6d47;
+}
+
+.btn-ghost:pressed {
+    -fx-background-color: rgba(53, 79, 51, 0.25);
+    -fx-text-fill: #ffffff;
+}
+
+/* Danger Button */
+.btn-danger {
+    -fx-background-color: linear-gradient(to bottom, #6a0000, #8B0000);
+    -fx-text-fill: #ffb3b3;
+    -fx-border-color: #a30000;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(139, 0, 0, 0.5), 10, 0.5, 0, 0);
+}
+
+.btn-danger:hover {
+    -fx-background-color: linear-gradient(to bottom, #8B0000, #6a0000);
+    -fx-text-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(139, 0, 0, 0.7), 20, 0.7, 0, 0);
+}
+
+/* ==========================================================================
+   FORM CONTROLS
+   ========================================================================== */
+
+.text-field {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #ffcc00;
+    -fx-border-color: #354f33;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-font-family: "Consolas", "Monaco", Monospace;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.7), 8, 0.3, 0, 1);
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
+}
+
+.text-field:focused {
+    -fx-border-color: rgba(255, 204, 0, 0.3);
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.7), 8, 0.3, 0, 1);
+}
+
+.text-area {
+    -fx-background-color: #121212;
+    -fx-text-fill: #b0b0b0;
+    -fx-border-color: #2b2b2b;
+    -fx-border-width: 2px;
+    -fx-padding: 10px;
+    -fx-font-family: "Courier New", Monospace;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.8), 10, 0.5, 0, 0);
+}
+
+.text-area .content {
+    -fx-background-color: #121212;
+}
+
+/* ==========================================================================
+   TYPOGRAPHY
+   ========================================================================== */
+
+.label-header {
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-text-fill: linear-gradient(to bottom, #e0e0e0, #b0b0b0);
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: linear-gradient(to right, transparent, #4b5320, transparent);
+    -fx-padding: 0 0 8 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 2, 0.5, 1, 1);
+}
+
+.label-subheader {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #354f33;
+    -fx-padding: 5 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgba(53, 79, 51, 0.3);
+}
+
+.label-code {
+    -fx-font-family: "Consolas", "Monaco", Monospace;
+    -fx-text-fill: #ffcc00;
+    -fx-background-color: rgba(43, 43, 43, 0.5);
+    -fx-padding: 2 6;
+    -fx-background-radius: 2px;
+    -fx-border-radius: 2px;
+}
+
+.label-warning {
+    -fx-text-fill: #8B0000;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================================================
+   PROGRESS BAR
+   ========================================================================== */
+
+.progress-bar {
+    -fx-accent: #4b5320;
+    -fx-control-inner-background: #2b2b2b;
+    -fx-border-color: #354f33;
+    -fx-border-width: 1px;
+    -fx-padding: 2px;
+}
+
+.progress-bar .track {
+    -fx-background-color: #2b2b2b;
+    -fx-background-radius: 0;
+}
+
+.progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, #4b5320, #5d662b);
+    -fx-background-radius: 0;
+    -fx-padding: 2px;
+}
+
+/* ==========================================================================
+   SEPARATORS
+   ========================================================================== */
+
+.separator {
+    -fx-background-color: linear-gradient(to right, transparent, #2b2b2b, transparent);
+    -fx-min-height: 1px;
+    -fx-max-height: 1px;
+    -fx-padding: 5 0;
+}
+
+.divider-glow {
+    -fx-background-color: linear-gradient(to right, transparent, #4b5320, transparent);
+    -fx-min-height: 2px;
+    -fx-max-height: 2px;
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+.no-glow {
+    -fx-effect: null;
+}
+
+.high-contrast {
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #ffffff;
+}
+
+.transparent-bg {
+    -fx-background-color: transparent;
+}
+
+.border-highlight {
+    -fx-border-color: #ffcc00;
+    -fx-border-width: 2px;
+}
+
+/* For grid background effect - apply as a separate style class */
+.grid-background {
+    -fx-background-color:
+        linear-gradient(to right, rgba(75, 83, 32, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(75, 83, 32, 0.05) 1px, transparent 1px);
+    -fx-background-size: 25px 25px;
+}
+
+/* CRT flicker effect - apply as needed */
+.crt-flicker {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 50%,
+        rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+}

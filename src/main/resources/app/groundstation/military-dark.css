@@ -323,6 +323,21 @@
     -fx-max-height: 2px;
 }
 
+/* Draggable divider between map and sidebar */
+.main-split-pane {
+    -fx-background-color: #121212;
+}
+
+.main-split-pane > .split-pane-divider {
+    -fx-background-color: #4b5320;
+    -fx-padding: 0 4 0 4;
+    -fx-cursor: h-resize;
+}
+
+.main-split-pane > .split-pane-divider:hover {
+    -fx-background-color: #ffcc00;
+}
+
 /* ==========================================================================
    UTILITY CLASSES
    ========================================================================== */

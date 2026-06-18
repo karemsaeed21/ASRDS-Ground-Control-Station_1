@@ -52,6 +52,21 @@ public class ActiveConnection {
         return sendCommand("GET_STATUS," + sessionID);
     }
 
+    /** Begin autonomous mission after area has been sent. */
+    public boolean startMission() {
+        return sendCommand("START_MISSION," + sessionID);
+    }
+
+    /** Halt all autonomous activity immediately. */
+    public boolean abort() {
+        return sendCommand("ABORT," + sessionID);
+    }
+
+    /** Send an operator decision command (RTL, HOLD, RESUME, LAND). */
+    public boolean sendDecision(String command) {
+        return sendCommand(command + "," + sessionID);
+    }
+
     public boolean isActive() {
         return active && port != null && port.isOpen();
     }

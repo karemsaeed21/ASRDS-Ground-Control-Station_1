@@ -103,9 +103,22 @@ def handle_incoming(ser: serial.Serial, session_id: int):
             ser.write(f"MISSION_ACK SID={session_id}\n".encode())
             ser.flush()
             print("[DEVICE] Mission area received and acknowledged.")
+        elif line.startswith("START_MISSION"):
+            ser.write(f"MISSION_STARTED SID={session_id}\n".encode())
+            ser.flush()
+            print("[DEVICE] Mission started.")
         elif line.startswith("ABORT"):
+            ser.write(f"DECISION_ACK ABORT SID={session_id}\n".encode())
+            ser.flush()
             print("[DEVICE] ABORT received — stopping.")
             return False
+        elif line.startswith(("RTL", "HOLD", "RESUME", "LAND")):
+            cmd = line.split(",")[0]
+            ser.write(f"DECISION_ACK {cmd} SID={session_id}\n".encode())
+            ser.flush()
+            print(f"[DEVICE] Decision {cmd} acknowledged.")
+            if cmd in ("RTL", "LAND"):
+                return False
     return True
 
 

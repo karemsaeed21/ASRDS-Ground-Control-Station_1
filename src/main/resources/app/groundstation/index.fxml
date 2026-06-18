@@ -3,25 +3,26 @@
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane stylesheets="@military-dark.css"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="app.groundstation.HelloController">
+<SplitPane dividerPositions="0.78" styleClass="main-split-pane" stylesheets="@military-dark.css"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="app.groundstation.HelloController">
 
-   <!-- ═══════════════════════ CENTER ═══════════════════════════════════════════ -->
-   <center>
-      <VBox styleClass="bg-hud" BorderPane.alignment="CENTER">
+   <!-- ═══════════════════════ LEFT: map + bottom strip ═══════════════════════ -->
+      <VBox styleClass="bg-hud">
 
          <!-- Map fills all available vertical space -->
          <AnchorPane fx:id="MapContainer" VBox.vgrow="ALWAYS" />
@@ -36,17 +37,18 @@
                   <padding><Insets bottom="6.0" /></padding>
                </Label>
 
-               <!-- Transmitter row (static) -->
+               <!-- Transmitter row -->
                <HBox alignment="CENTER_LEFT" spacing="8" prefHeight="40.0">
                   <Label prefWidth="100.0" styleClass="label-code" text="Transmitter">
                      <font><Font size="12.0" /></font>
                   </Label>
-                  <Label alignment="CENTER" prefWidth="106.0"
-                         style="-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-padding: 3 6;"
-                         text="Connected">
+                  <Label fx:id="transmitterStatusLabel" alignment="CENTER" prefWidth="106.0"
+                         style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-padding: 3 6;"
+                         text="Disconnected">
                      <font><Font size="12.0" /></font>
                   </Label>
-                  <Button disable="true" mnemonicParsing="false" styleClass="btn-ghost" text="Connect">
+                  <Button fx:id="transmitterConnectButton" mnemonicParsing="false"
+                          onAction="#toggleTransmitterConnection" styleClass="btn-primary" text="Connect">
                      <font><Font size="12.0" /></font>
                   </Button>
                </HBox>
@@ -69,6 +71,18 @@
                           onAction="#toggleDroneSimulate" styleClass="btn-ghost" text="Simulate">
                      <font><Font size="12.0" /></font>
                   </Button>
+               </HBox>
+
+               <!-- Connectivity check -->
+               <HBox alignment="CENTER_LEFT" spacing="8">
+                  <Button fx:id="checkConnectivityButton" mnemonicParsing="false"
+                          onAction="#checkConnectivity" styleClass="btn-ghost" text="Check Connectivity"
+                          prefHeight="30" prefWidth="160">
+                     <font><Font size="11.0" /></font>
+                  </Button>
+                  <Label fx:id="connectivityDetailLabel" styleClass="data-key" text="">
+                     <font><Font size="11.0" /></font>
+                  </Label>
                </HBox>
             </VBox>
 
@@ -129,11 +143,15 @@
                <!-- Action row -->
                <HBox spacing="8" alignment="CENTER_LEFT">
                   <Button fx:id="DrowButton" mnemonicParsing="false" onAction="#updateCordinates"
-                          prefHeight="34.0" prefWidth="160.0" styleClass="btn-primary" text="Set Search Area">
+                          prefHeight="34.0" prefWidth="140.0" styleClass="btn-primary" text="Set Search Area">
+                     <font><Font size="12.0" /></font>
+                  </Button>
+                  <Button fx:id="defineSquareButton" mnemonicParsing="false" onAction="#defineSquare"
+                          prefHeight="34.0" prefWidth="140.0" styleClass="btn-caution" text="Define Square">
                      <font><Font size="12.0" /></font>
                   </Button>
                   <Button fx:id="ClearButton" mnemonicParsing="false" onAction="#clearCordinates"
-                          prefHeight="34.0" prefWidth="160.0" styleClass="btn-ghost" text="Clear Search Area">
+                          prefHeight="34.0" prefWidth="140.0" styleClass="btn-ghost" text="Clear Search Area">
                      <font><Font size="12.0" /></font>
                   </Button>
                </HBox>
@@ -141,92 +159,192 @@
 
          </HBox>
       </VBox>
-   </center>
 
-   <!-- ═══════════════════════ RIGHT: telemetry sidebar ════════════════════════ -->
-   <right>
-      <VBox prefWidth="290.0" styleClass="telemetry-panel" BorderPane.alignment="CENTER">
-         <padding><Insets top="20" right="16" bottom="16" left="16" /></padding>
+   <!-- ═══════════════════════ RIGHT: resizable telemetry sidebar ════════════ -->
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minWidth="220" prefWidth="300" maxWidth="700"
+                  styleClass="telemetry-panel sidebar-scroll">
+         <VBox minWidth="200" styleClass="telemetry-panel">
+            <padding><Insets top="20" right="16" bottom="16" left="16" /></padding>
 
-         <!-- ── TELEMETRY ─────────────────────────────────────────────────── -->
-         <Label styleClass="section-title" text="▶  TELEMETRY" />
-         <Region prefHeight="12" />
+            <!-- ── TELEMETRY ─────────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  TELEMETRY" />
+            <Region prefHeight="12" />
 
-         <HBox styleClass="data-row" alignment="CENTER_LEFT">
-            <Label styleClass="data-key" text="LATITUDE" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="latValueLabel" styleClass="data-value" text="---" />
-         </HBox>
-         <HBox styleClass="data-row" alignment="CENTER_LEFT">
-            <Label styleClass="data-key" text="LONGITUDE" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="lonValueLabel" styleClass="data-value" text="---" />
-         </HBox>
-         <HBox styleClass="data-row" alignment="CENTER_LEFT">
-            <Label styleClass="data-key" text="ALTITUDE" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="altValueLabel" styleClass="data-value" text="---" />
-         </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="LATITUDE" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="latValueLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="LONGITUDE" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="lonValueLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="ALTITUDE" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="altValueLabel" styleClass="data-value" text="---" />
+            </HBox>
 
-         <Region prefHeight="10" />
+            <Region prefHeight="10" />
 
-         <!-- Battery -->
-         <HBox alignment="CENTER_LEFT" spacing="6">
-            <Label styleClass="data-key" text="BATTERY" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="batteryValueLabel" styleClass="data-value" text="---" />
-         </HBox>
-         <Region prefHeight="6" />
-         <ProgressBar fx:id="batteryBar" maxWidth="Infinity" prefHeight="12"
-                      progress="0" styleClass="battery-bar" />
+            <HBox alignment="CENTER_LEFT" spacing="6">
+               <Label styleClass="data-key" text="BATTERY" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="batteryValueLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <Region prefHeight="6" />
+            <ProgressBar fx:id="batteryBar" maxWidth="Infinity" prefHeight="12"
+                         progress="0" styleClass="battery-bar" />
 
-         <Region prefHeight="20" />
-         <Separator styleClass="divider-glow" />
-         <Region prefHeight="20" />
+            <Region prefHeight="8" />
+            <CheckBox fx:id="followDroneCheckBox" onAction="#toggleFollowDrone"
+                      styleClass="data-key" text="Follow drone on map" />
 
-         <!-- ── FLIGHT PATH ────────────────────────────────────────────────── -->
-         <Label styleClass="section-title" text="▶  FLIGHT PATH" />
-         <Region prefHeight="12" />
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="20" />
 
-         <HBox styleClass="data-row" alignment="CENTER_LEFT">
-            <Label styleClass="data-key" text="RECORDED" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="pathPointsLabel" styleClass="data-value" text="0 pts" />
-         </HBox>
-         <Region prefHeight="8" />
-         <Button fx:id="clearPathButton" mnemonicParsing="false" onAction="#clearDronePath"
-                 maxWidth="Infinity" prefHeight="32" styleClass="btn-ghost" text="CLEAR PATH">
-            <font><Font size="12.0" /></font>
-         </Button>
+            <!-- ── FLIGHT PATH ────────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  FLIGHT PATH" />
+            <Region prefHeight="12" />
 
-         <Region prefHeight="20" />
-         <Separator styleClass="divider-glow" />
-         <Region prefHeight="20" />
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="RECORDED" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="pathPointsLabel" styleClass="data-value" text="0 pts" />
+            </HBox>
+            <Region prefHeight="8" />
+            <Button fx:id="clearPathButton" mnemonicParsing="false" onAction="#clearDronePath"
+                    maxWidth="Infinity" prefHeight="32" styleClass="btn-ghost" text="CLEAR PATH">
+               <font><Font size="12.0" /></font>
+            </Button>
 
-         <!-- ── MISSION AREA ───────────────────────────────────────────────── -->
-         <Label styleClass="section-title" text="▶  MISSION AREA" />
-         <Region prefHeight="12" />
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="20" />
 
-         <HBox styleClass="data-row" alignment="CENTER_LEFT">
-            <Label styleClass="data-key" text="STATUS" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="missionStatusLabel" styleClass="data-value-warn" text="NOT SENT" />
-         </HBox>
-         <Region prefHeight="8" />
-         <Button fx:id="sendMissionButton" mnemonicParsing="false" onAction="#sendMissionArea"
-                 disable="true" maxWidth="Infinity" prefHeight="34" styleClass="btn-primary"
-                 text="SEND MISSION AREA">
-            <font><Font size="12.0" /></font>
-         </Button>
+            <!-- ── MISSION AREA ───────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  MISSION AREA" />
+            <Region prefHeight="12" />
 
-         <!-- Push build info to bottom -->
-         <Region VBox.vgrow="ALWAYS" />
-         <Separator styleClass="divider-glow" />
-         <Region prefHeight="10" />
-         <Label styleClass="data-key" text="ASRDS GROUND CONTROL  v1.0" />
-         <Label styleClass="data-key" text="115200 BAUD  ·  POS PROTOCOL" />
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="STATUS" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="missionStatusLabel" styleClass="data-value-warn" text="NOT SENT" />
+            </HBox>
+            <Region prefHeight="8" />
+            <Button fx:id="sendMissionButton" mnemonicParsing="false" onAction="#sendMissionArea"
+                    disable="true" maxWidth="Infinity" prefHeight="34" styleClass="btn-primary"
+                    text="SEND MISSION AREA">
+               <font><Font size="12.0" /></font>
+            </Button>
 
-      </VBox>
-   </right>
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="20" />
 
-</BorderPane>
+            <!-- ── FLIGHT CONTROLS ────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  FLIGHT CONTROLS" />
+            <Region prefHeight="12" />
+
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="FLIGHT" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="flightStatusLabel" styleClass="data-value" text="IDLE" />
+            </HBox>
+            <Region prefHeight="8" />
+
+            <Button fx:id="startNewFlightButton" mnemonicParsing="false" onAction="#startNewFlight"
+                    maxWidth="Infinity" prefHeight="34" styleClass="btn-primary" text="START NEW FLIGHT">
+               <font><Font size="12.0" /></font>
+            </Button>
+            <Region prefHeight="6" />
+            <Button fx:id="startMissionButton" mnemonicParsing="false" onAction="#startFlight"
+                    disable="true" maxWidth="Infinity" prefHeight="34" styleClass="btn-caution" text="START FLIGHT">
+               <font><Font size="12.0" /></font>
+            </Button>
+            <Region prefHeight="6" />
+            <Button fx:id="stopFlightButton" mnemonicParsing="false" onAction="#stopFlight"
+                    disable="true" maxWidth="Infinity" prefHeight="34" styleClass="btn-danger" text="STOP FLIGHT">
+               <font><Font size="12.0" /></font>
+            </Button>
+
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="20" />
+
+            <!-- ── DECISIONS ──────────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  DECISIONS" />
+            <Region prefHeight="12" />
+
+            <HBox spacing="6">
+               <Button fx:id="rtlButton" mnemonicParsing="false" onAction="#sendRtl"
+                       disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="32"
+                       styleClass="btn-ghost" text="RTL">
+                  <font><Font size="11.0" /></font>
+               </Button>
+               <Button fx:id="holdButton" mnemonicParsing="false" onAction="#sendHold"
+                       disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="32"
+                       styleClass="btn-ghost" text="HOLD">
+                  <font><Font size="11.0" /></font>
+               </Button>
+            </HBox>
+            <Region prefHeight="6" />
+            <HBox spacing="6">
+               <Button fx:id="resumeButton" mnemonicParsing="false" onAction="#sendResume"
+                       disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="32"
+                       styleClass="btn-ghost" text="RESUME">
+                  <font><Font size="11.0" /></font>
+               </Button>
+               <Button fx:id="landButton" mnemonicParsing="false" onAction="#sendLand"
+                       disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="32"
+                       styleClass="btn-ghost" text="LAND">
+                  <font><Font size="11.0" /></font>
+               </Button>
+            </HBox>
+
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="20" />
+
+            <!-- ── REPORTS ────────────────────────────────────────────────────── -->
+            <Label styleClass="section-title" text="▶  REPORTS" />
+            <Region prefHeight="12" />
+
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="FLIGHT ID" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="reportFlightIdLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="DURATION" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="reportDurationLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="MAX ALT" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="reportMaxAltLabel" styleClass="data-value" text="---" />
+            </HBox>
+            <HBox styleClass="data-row" alignment="CENTER_LEFT">
+               <Label styleClass="data-key" text="EVENTS" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="reportEventsLabel" styleClass="data-value" text="0" />
+            </HBox>
+            <Region prefHeight="8" />
+            <Button fx:id="exportReportButton" mnemonicParsing="false" onAction="#exportFlightReport"
+                    maxWidth="Infinity" prefHeight="34" styleClass="btn-primary" text="EXPORT REPORT">
+               <font><Font size="12.0" /></font>
+            </Button>
+
+            <Region prefHeight="20" />
+            <Separator styleClass="divider-glow" />
+            <Region prefHeight="10" />
+            <Label styleClass="data-key" text="ASRDS GROUND CONTROL  v1.0" />
+            <Label styleClass="data-key" text="115200 BAUD  ·  POS PROTOCOL" />
+
+         </VBox>
+      </ScrollPane>
+
+</SplitPane>

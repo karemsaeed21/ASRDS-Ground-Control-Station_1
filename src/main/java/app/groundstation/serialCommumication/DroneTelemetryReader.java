@@ -18,12 +18,20 @@ public class DroneTelemetryReader {
     private final SerialPort port;
     private final PositionParser parser = new PositionParser();
     private final java.util.function.Consumer<PositionUpdate> onPosition;
+    private final java.util.function.Consumer<String> onResponse;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private SerialPortDataListener listener;
 
     public DroneTelemetryReader(SerialPort port, java.util.function.Consumer<PositionUpdate> onPosition) {
+        this(port, onPosition, null);
+    }
+
+    public DroneTelemetryReader(SerialPort port,
+                                java.util.function.Consumer<PositionUpdate> onPosition,
+                                java.util.function.Consumer<String> onResponse) {
         this.port = port;
         this.onPosition = onPosition;
+        this.onResponse = onResponse;
     }
 
     /**
@@ -55,6 +63,15 @@ public class DroneTelemetryReader {
                         onPosition.accept(pos);
                     } catch (Exception e) {
                         System.err.println("DroneTelemetryReader callback error: " + e.getMessage());
+                    }
+                }
+                if (onResponse != null) {
+                    for (String line : parser.getNonPositionLines()) {
+                        try {
+                            onResponse.accept(line);
+                        } catch (Exception e) {
+                            System.err.println("DroneTelemetryReader response error: " + e.getMessage());
+                        }
                     }
                 }
             }

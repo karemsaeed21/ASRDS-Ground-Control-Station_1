@@ -2,6 +2,7 @@ package app.groundstation.serialCommumication.DataHandlers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,6 +13,7 @@ import java.util.List;
 public class PositionParser {
 
     private final StringBuilder buffer = new StringBuilder();
+    private final List<String> nonPositionLines = new ArrayList<>();
 
     /**
      * Append received bytes and parse any complete lines.
@@ -19,6 +21,7 @@ public class PositionParser {
      * @return list of parsed position updates (may be empty)
      */
     public List<PositionUpdate> parse(byte[] data) {
+        nonPositionLines.clear();
         if (data == null || data.length == 0) {
             return List.of();
         }
@@ -31,9 +34,16 @@ public class PositionParser {
             PositionUpdate pos = parseLine(line);
             if (pos != null) {
                 results.add(pos);
+            } else if (!line.isEmpty() && !line.startsWith("HSH")) {
+                nonPositionLines.add(line);
             }
         }
         return results;
+    }
+
+    /** Non-POS lines parsed in the last {@link #parse(byte[])} call. */
+    public List<String> getNonPositionLines() {
+        return Collections.unmodifiableList(nonPositionLines);
     }
 
     private static PositionUpdate parseLine(String line) {

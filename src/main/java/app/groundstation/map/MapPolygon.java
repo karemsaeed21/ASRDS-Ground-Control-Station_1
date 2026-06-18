@@ -37,11 +37,19 @@ public class MapPolygon extends MapLayer {
     }
 
     public void draw() {
+        syncFromFields();
+        this.polygon.setVisible(true);
+        this.markDirty();
+    }
 
+    public void syncFromFields() {
+        for (PolygonPoint point : polygonPoints) {
+            point.syncFromFields();
+        }
+    }
 
-
-        this.polygon.setVisible(true); // Make it visible
-        this.markDirty(); // Trigger layoutLayer() to redraw
+    public List<PolygonPoint> getPolygonPoints() {
+        return polygonPoints;
     }
 
     public void clear() {

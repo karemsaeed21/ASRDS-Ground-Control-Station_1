@@ -73,4 +73,26 @@ public class PolygonPoint {
     public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
+
+    /** Read lat/lon from the text fields into internal state (used before drawing). */
+    public void syncFromFields() {
+        try {
+            String latText = latitudeField.getText().trim();
+            String lonText = longitudeField.getText().trim();
+            if (!latText.isEmpty()) {
+                setLatitude(Double.parseDouble(latText));
+            }
+            if (!lonText.isEmpty()) {
+                setLongitude(Double.parseDouble(lonText));
+            }
+        } catch (NumberFormatException ignored) {
+        }
+    }
+
+    public void setFields(double lat, double lon) {
+        setLatitude(lat);
+        setLongitude(lon);
+        updateLatitudeFieldValue(lat);
+        updateLongitudeFieldValue(lon);
+    }
 }

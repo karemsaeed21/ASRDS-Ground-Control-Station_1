@@ -2,6 +2,7 @@ package app.groundstation;
 
 import app.groundstation.mainBrain.Brain;
 import app.groundstation.mainBrain.DroneState;
+import app.groundstation.mainBrain.FlightReport;
 import app.groundstation.map.MapObject;
 import app.groundstation.map.MapPolygon;
 import app.groundstation.map.PolygonPoint;
@@ -10,6 +11,7 @@ import app.groundstation.serialCommumication.DataHandlers.PositionUpdate;
 import app.groundstation.serialCommumication.DroneTelemetryReader;
 import app.groundstation.serialCommumication.HandShake;
 import app.groundstation.serialCommumication.HandShakeResult;
+import app.groundstation.serialCommumication.TransmitterConnection;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 import javafx.animation.KeyFrame;
@@ -20,10 +22,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -46,11 +49,16 @@ public class HelloController implements Initializable {
     @FXML private Button x4_listen_button;
     @FXML private Button DrowButton;
     @FXML private Button ClearButton;
+    @FXML private Button defineSquareButton;
 
     // ── Connection controls ────────────────────────────────────────────────────
+    @FXML private Label  transmitterStatusLabel;
+    @FXML private Button transmitterConnectButton;
     @FXML private Label  droneStatusLabel;
     @FXML private Button droneConnectButton;
     @FXML private Button droneSimulateButton;
+    @FXML private Button checkConnectivityButton;
+    @FXML private Label  connectivityDetailLabel;
 
     // ── Map ───────────────────────────────────────────────────────────────────
     @FXML private AnchorPane MapContainer;
@@ -62,11 +70,31 @@ public class HelloController implements Initializable {
     @FXML private Label batteryValueLabel;
     @FXML private ProgressBar batteryBar;
     @FXML private Label pathPointsLabel;
+    @FXML private CheckBox followDroneCheckBox;
 
     // ── Mission controls (right panel) ────────────────────────────────────────
     @FXML private Label  missionStatusLabel;
     @FXML private Button sendMissionButton;
     @FXML private Button clearPathButton;
+
+    // ── Flight controls ───────────────────────────────────────────────────────
+    @FXML private Label  flightStatusLabel;
+    @FXML private Button startNewFlightButton;
+    @FXML private Button startMissionButton;
+    @FXML private Button stopFlightButton;
+
+    // ── Decision controls ─────────────────────────────────────────────────────
+    @FXML private Button rtlButton;
+    @FXML private Button holdButton;
+    @FXML private Button resumeButton;
+    @FXML private Button landButton;
+
+    // ── Reports ───────────────────────────────────────────────────────────────
+    @FXML private Label reportFlightIdLabel;
+    @FXML private Label reportDurationLabel;
+    @FXML private Label reportMaxAltLabel;
+    @FXML private Label reportEventsLabel;
+    @FXML private Button exportReportButton;
 
     // ── Constants ─────────────────────────────────────────────────────────────
     private static final String DRONE_ID       = "RPI001";
@@ -76,14 +104,20 @@ public class HelloController implements Initializable {
     private static final double SIM_RADIUS_DEG = 0.002;
 
     // ── State ─────────────────────────────────────────────────────────────────
-    private MapObject           mapObject;
-    private Brain               brain;
-    private ActiveConnection    activeConnection;
-    private DroneTelemetryReader telemetryReader;
-    private HandShakeResult     handshakeResult;
-    private volatile boolean    droneConnected;
-    private Timeline            simTimeline;
-    private volatile boolean    simRunning;
+    private MapObject              mapObject;
+    private Brain                  brain;
+    private ActiveConnection       activeConnection;
+    private DroneTelemetryReader   telemetryReader;
+    private TransmitterConnection  transmitterConnection;
+    private HandShakeResult        handshakeResult;
+    private FlightReport           flightReport;
+    private volatile boolean       droneConnected;
+    private volatile boolean       transmitterConnected;
+    private volatile boolean       flightActive;
+    private volatile boolean       missionSent;
+    private Timeline               simTimeline;
+    private volatile boolean       simRunning;
+    private Timeline               reportRefreshTimeline;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -101,11 +135,69 @@ public class HelloController implements Initializable {
 
         brain = new Brain(mapObject);
         brain.setTelemetryListener(this::onTelemetryUpdate);
+        flightReport = new FlightReport();
+        transmitterConnection = new TransmitterConnection();
 
         resetTelemetryDisplay();
+        updateFlightControls();
+        updateReportDisplay();
+
+        reportRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateReportDisplay()));
+        reportRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        reportRefreshTimeline.play();
     }
 
-    // ── Connection ────────────────────────────────────────────────────────────
+    // ── Transmitter connection ────────────────────────────────────────────────
+
+    @FXML
+    public void toggleTransmitterConnection() {
+        if (transmitterConnected) disconnectTransmitter();
+        else                      connectTransmitter();
+    }
+
+    private void connectTransmitter() {
+        setTransmitterStatus("Connecting...", "#555555");
+        if (transmitterConnectButton != null) transmitterConnectButton.setDisable(true);
+
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return transmitterConnection.connect();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            boolean ok = Boolean.TRUE.equals(task.getValue());
+            transmitterConnected = ok;
+            if (ok) {
+                setTransmitterStatus("Connected", "#2e7d32");
+                if (transmitterConnectButton != null) transmitterConnectButton.setText("Disconnect");
+                flightReport.recordEvent("Transmitter connected (serial)");
+            } else {
+                setTransmitterStatus("Disconnected", "#8B0000");
+            }
+            if (transmitterConnectButton != null) transmitterConnectButton.setDisable(false);
+            updateFlightControls();
+        });
+
+        task.setOnFailed(e -> {
+            setTransmitterStatus("Disconnected", "#8B0000");
+            if (transmitterConnectButton != null) transmitterConnectButton.setDisable(false);
+        });
+
+        new Thread(task).start();
+    }
+
+    private void disconnectTransmitter() {
+        transmitterConnection.disconnect();
+        transmitterConnected = false;
+        setTransmitterStatus("Disconnected", "#8B0000");
+        if (transmitterConnectButton != null) transmitterConnectButton.setText("Connect");
+        flightReport.recordEvent("Transmitter disconnected");
+        updateFlightControls();
+    }
+
+    // ── Drone connection ──────────────────────────────────────────────────────
 
     @FXML
     public void toggleDroneConnection() {
@@ -114,7 +206,7 @@ public class HelloController implements Initializable {
     }
 
     private void connectDrone() {
-        setStatus("Connecting...", "#555555");
+        setDroneStatus("Connecting...", "#555555");
         if (droneConnectButton != null) droneConnectButton.setDisable(true);
 
         Task<HandShakeResult> task = new Task<>() {
@@ -127,22 +219,27 @@ public class HelloController implements Initializable {
         task.setOnSucceeded(e -> {
             HandShakeResult result = task.getValue();
             if (result != null && result.isHandShakeSuccess()) {
-                handshakeResult    = result;
-                activeConnection   = new ActiveConnection(result.getSessionID(), result.getPort());
-                telemetryReader    = new DroneTelemetryReader(result.getPort(), brain::onPositionReceived);
+                handshakeResult  = result;
+                activeConnection = new ActiveConnection(result.getSessionID(), result.getPort());
+                telemetryReader  = new DroneTelemetryReader(
+                    result.getPort(),
+                    brain::onPositionReceived,
+                    this::onSerialResponse
+                );
                 telemetryReader.start();
                 droneConnected = true;
-                setStatus("Connected", "#2e7d32");
+                setDroneStatus("Connected", "#2e7d32");
                 if (droneConnectButton != null) droneConnectButton.setText("Disconnect");
-                if (sendMissionButton  != null) sendMissionButton.setDisable(false);
+                flightReport.recordEvent("Drone connected (serial)");
             } else {
-                setStatus("Disconnected", "#8B0000");
+                setDroneStatus("Disconnected", "#8B0000");
             }
             if (droneConnectButton != null) droneConnectButton.setDisable(false);
+            updateFlightControls();
         });
 
         task.setOnFailed(e -> {
-            setStatus("Disconnected", "#8B0000");
+            setDroneStatus("Disconnected", "#8B0000");
             if (droneConnectButton != null) droneConnectButton.setDisable(false);
         });
 
@@ -154,53 +251,155 @@ public class HelloController implements Initializable {
         if (activeConnection != null) { activeConnection.close(); activeConnection = null; }
         handshakeResult = null;
         droneConnected  = false;
+        if (flightActive) endFlight("DISCONNECTED");
         Platform.runLater(() -> brain.clearDronePreview());
-        setStatus("Disconnected", "#8B0000");
-        if (droneConnectButton  != null) droneConnectButton.setText("Connect");
-        if (sendMissionButton   != null) sendMissionButton.setDisable(true);
-        if (missionStatusLabel  != null) missionStatusLabel.setText("NOT SENT");
+        setDroneStatus("Disconnected", "#8B0000");
+        if (droneConnectButton != null) droneConnectButton.setText("Connect");
+        if (missionStatusLabel != null) missionStatusLabel.setText("NOT SENT");
+        missionSent = false;
         resetTelemetryDisplay();
+        updateFlightControls();
+    }
+
+    // ── Connectivity check ────────────────────────────────────────────────────
+
+    @FXML
+    public void checkConnectivity() {
+        StringBuilder detail = new StringBuilder();
+        detail.append("TX: ").append(transmitterConnected ? "OK" : "OFF");
+        detail.append("  |  Drone: ").append(droneConnected || simRunning ? "OK" : "OFF");
+
+        if (activeConnection != null && activeConnection.isActive()) {
+            activeConnection.requestStatus();
+            detail.append("  |  Status ping sent");
+            flightReport.recordEvent("Connectivity check — status ping sent");
+        } else if (simRunning) {
+            detail.append("  |  Sim active");
+        }
+
+        if (connectivityDetailLabel != null) {
+            connectivityDetailLabel.setText(detail.toString());
+        }
+    }
+
+    private void onSerialResponse(String line) {
+        Platform.runLater(() -> {
+            if (line.startsWith("STATUS")) {
+                if (connectivityDetailLabel != null) connectivityDetailLabel.setText("Drone: " + line);
+                flightReport.recordEvent("Status response: " + line);
+            } else if (line.startsWith("MISSION_ACK")) {
+                setMissionStatus("ACK ✓");
+                missionSent = true;
+                flightReport.setMissionStatus("ACKNOWLEDGED");
+            } else if (line.startsWith("MISSION_STARTED")) {
+                setFlightStatus("IN FLIGHT");
+                flightActive = true;
+                flightReport.setFlightStatus("IN FLIGHT");
+                flightReport.recordEvent("Mission started by drone");
+                updateFlightControls();
+            } else if (line.startsWith("DECISION_ACK")) {
+                flightReport.recordEvent("Decision acknowledged: " + line);
+            }
+        });
     }
 
     // ── Simulation ────────────────────────────────────────────────────────────
 
     @FXML
     public void toggleDroneSimulate() {
-        if (simRunning) {
-            stopSimulation();
-        } else {
-            startSimulation();
-        }
+        if (simRunning) stopSimulation();
+        else            startSimulation();
     }
 
     private void startSimulation() {
         simRunning = true;
-        setStatus("Simulating", "#e65100");
+        setDroneStatus("Simulating", "#e65100");
         if (droneSimulateButton != null) droneSimulateButton.setText("Stop Simulate");
-        if (sendMissionButton   != null) sendMissionButton.setDisable(false);
+        flightReport.recordEvent("Simulation mode started");
 
         final long startNanos = System.nanoTime();
         simTimeline = new Timeline(new KeyFrame(Duration.millis(200), e -> {
-            double t      = (System.nanoTime() - startNanos) / 1e9;
-            double lat    = SIM_LAT + SIM_RADIUS_DEG * Math.sin(t * 0.5);
-            double lon    = SIM_LON + SIM_RADIUS_DEG * Math.cos(t * 0.5);
-            double alt    = SIM_ALT + 5.0 * Math.sin(t * 0.3);
-            int    battery = Math.max(0, 100 - (int)(t / 2));   // drains from 100 → 0 over ~200 s
+            double t       = (System.nanoTime() - startNanos) / 1e9;
+            double lat     = SIM_LAT + SIM_RADIUS_DEG * Math.sin(t * 0.5);
+            double lon     = SIM_LON + SIM_RADIUS_DEG * Math.cos(t * 0.5);
+            double alt     = SIM_ALT + 5.0 * Math.sin(t * 0.3);
+            int    battery = Math.max(0, 100 - (int)(t / 2));
             brain.onPositionReceived(new PositionUpdate(lat, lon, alt, battery));
         }));
         simTimeline.setCycleCount(Timeline.INDEFINITE);
         simTimeline.play();
+        updateFlightControls();
     }
 
     private void stopSimulation() {
         if (simTimeline != null) { simTimeline.stop(); simTimeline = null; }
         simRunning = false;
+        if (flightActive) endFlight("SIM STOPPED");
         Platform.runLater(() -> brain.clearDronePreview());
-        setStatus("Disconnected", "#8B0000");
+        setDroneStatus("Disconnected", "#8B0000");
         if (droneSimulateButton != null) droneSimulateButton.setText("Simulate");
-        if (sendMissionButton   != null) sendMissionButton.setDisable(true);
         resetTelemetryDisplay();
+        updateFlightControls();
     }
+
+    // ── Map / search area ─────────────────────────────────────────────────────
+
+    @FXML
+    public void updateCordinates() {
+        mapObject.drawSearchArea();
+    }
+
+    @FXML
+    public void clearCordinates() {
+        mapObject.clearSearchArea();
+        clearCoordinateFields();
+    }
+
+    @FXML
+    public void defineSquare() {
+        try {
+            double lat1 = Double.parseDouble(x1_lat.getText().trim());
+            double lon1 = Double.parseDouble(x1_long.getText().trim());
+            double lat2 = Double.parseDouble(x2_lat.getText().trim());
+            double lon2 = Double.parseDouble(x2_long.getText().trim());
+
+            double minLat = Math.min(lat1, lat2);
+            double maxLat = Math.max(lat1, lat2);
+            double minLon = Math.min(lon1, lon2);
+            double maxLon = Math.max(lon1, lon2);
+
+            x1_lat.setText(String.valueOf(minLat));
+            x1_long.setText(String.valueOf(minLon));
+            x2_lat.setText(String.valueOf(maxLat));
+            x2_long.setText(String.valueOf(minLon));
+            x3_lat.setText(String.valueOf(maxLat));
+            x3_long.setText(String.valueOf(maxLon));
+            x4_lat.setText(String.valueOf(minLat));
+            x4_long.setText(String.valueOf(maxLon));
+
+            MapPolygon polygon = mapObject.getMapPolygon();
+            List<PolygonPoint> pts = polygon.getPolygonPoints();
+            pts.get(0).setFields(minLat, minLon);
+            pts.get(1).setFields(maxLat, minLon);
+            pts.get(2).setFields(maxLat, maxLon);
+            pts.get(3).setFields(minLat, maxLon);
+            mapObject.drawSearchArea();
+            flightReport.recordEvent("Search square defined");
+        } catch (NumberFormatException ex) {
+            setMissionStatus("INVALID COORDS");
+        }
+    }
+
+    @FXML
+    public void toggleFollowDrone() {
+        boolean follow = followDroneCheckBox != null && followDroneCheckBox.isSelected();
+        brain.setFollowDrone(follow);
+    }
+
+    @FXML public void setX1ListenMode() {}
+    @FXML public void setX2ListenMode() {}
+    @FXML public void setX3ListenMode() {}
+    @FXML public void setX4ListenMode() {}
 
     // ── Mission ───────────────────────────────────────────────────────────────
 
@@ -223,15 +422,113 @@ public class HelloController implements Initializable {
                 new MapPoint(lat4, lon4)
             );
 
+            mapObject.drawSearchArea();
+
             if (activeConnection != null && activeConnection.isActive()) {
                 boolean ok = activeConnection.sendMissionArea(area);
                 setMissionStatus(ok ? "SENT ✓" : "SEND FAILED");
+                missionSent = ok;
+                if (ok) flightReport.setMissionStatus("SENT");
             } else {
-                // Simulation mode — just acknowledge visually
                 setMissionStatus("SET (sim)");
+                missionSent = true;
+                flightReport.setMissionStatus("SET (simulation)");
             }
+            updateFlightControls();
         } catch (NumberFormatException ex) {
             setMissionStatus("INVALID COORDS");
+        }
+    }
+
+    // ── Flight lifecycle ──────────────────────────────────────────────────────
+
+    @FXML
+    public void startNewFlight() {
+        if (flightActive) endFlight("NEW FLIGHT");
+        flightReport = new FlightReport();
+        flightReport.startNewFlight();
+        missionSent = false;
+        setMissionStatus("NOT SENT");
+        setFlightStatus("PREPARING");
+        Platform.runLater(() -> brain.clearDronePreview());
+        updateFlightControls();
+        updateReportDisplay();
+    }
+
+    @FXML
+    public void startFlight() {
+        if (!isLinkReady()) {
+            setFlightStatus("NO LINK");
+            return;
+        }
+        if (!missionSent) {
+            setFlightStatus("NO MISSION");
+            return;
+        }
+
+        flightActive = true;
+        setFlightStatus("IN FLIGHT");
+        flightReport.setFlightStatus("IN FLIGHT");
+        flightReport.recordEvent("Flight started");
+        brain.setFollowDrone(followDroneCheckBox != null && followDroneCheckBox.isSelected());
+
+        if (activeConnection != null && activeConnection.isActive()) {
+            activeConnection.startMission();
+        }
+        updateFlightControls();
+    }
+
+    @FXML
+    public void stopFlight() {
+        if (activeConnection != null && activeConnection.isActive()) {
+            activeConnection.abort();
+        }
+        endFlight("ABORTED");
+    }
+
+    private void endFlight(String reason) {
+        flightActive = false;
+        setFlightStatus(reason);
+        flightReport.endFlight(reason);
+        brain.setFollowDrone(false);
+        updateFlightControls();
+        updateReportDisplay();
+    }
+
+    // ── Decisions ─────────────────────────────────────────────────────────────
+
+    @FXML public void sendRtl()    { sendDecision("RTL"); }
+    @FXML public void sendHold()   { sendDecision("HOLD"); }
+    @FXML public void sendResume() { sendDecision("RESUME"); }
+    @FXML public void sendLand()  { sendDecision("LAND"); }
+
+    private void sendDecision(String command) {
+        if (!flightActive) return;
+        if (activeConnection != null && activeConnection.isActive()) {
+            activeConnection.sendDecision(command);
+        }
+        flightReport.recordEvent("Decision sent: " + command);
+        if ("LAND".equals(command) || "RTL".equals(command)) {
+            endFlight(command);
+        }
+    }
+
+    // ── Reports ───────────────────────────────────────────────────────────────
+
+    @FXML
+    public void exportFlightReport() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Flight Report");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        chooser.setInitialFileName("flight_" + flightReport.getFlightId() + ".csv");
+        File file = chooser.showSaveDialog(MapContainer.getScene().getWindow());
+        if (file == null) return;
+        try {
+            flightReport.exportCsv(file.toPath(), brain.getDroneState());
+            flightReport.recordEvent("Report exported to " + file.getName());
+            updateReportDisplay();
+        } catch (Exception ex) {
+            if (reportEventsLabel != null) reportEventsLabel.setText("Export failed");
         }
     }
 
@@ -240,18 +537,10 @@ public class HelloController implements Initializable {
     @FXML
     public void clearDronePath() {
         Platform.runLater(() -> brain.clearDronePreview());
+        flightReport.recordEvent("Flight path cleared");
     }
 
-    // ── Coordinate listen stubs (handled by PolygonPoint internally) ──────────
-
-    @FXML public void setX1ListenMode() {}
-    @FXML public void setX2ListenMode() {}
-    @FXML public void setX3ListenMode() {}
-    @FXML public void setX4ListenMode() {}
-    @FXML public void updateCordinates() {}
-    @FXML public void clearCordinates()  {}
-
-    // ── Telemetry callback (always on FX thread via Brain) ────────────────────
+    // ── Telemetry callback ──────────────────────────────────────────────────────
 
     private void onTelemetryUpdate(DroneState state) {
         if (state.hasPosition()) {
@@ -280,18 +569,58 @@ public class HelloController implements Initializable {
 
         int pts = state.getPathPoints().size();
         setText(pathPointsLabel, pts + " pts");
+        flightReport.updateFromState(state);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void setStatus(String text, String hexColor) {
+    private boolean isLinkReady() {
+        return droneConnected || simRunning;
+    }
+
+    private void updateFlightControls() {
+        boolean linkReady = isLinkReady();
+        boolean canStart  = linkReady && missionSent && !flightActive;
+
+        if (sendMissionButton  != null) sendMissionButton.setDisable(!linkReady);
+        if (startMissionButton != null) startMissionButton.setDisable(!canStart);
+        if (stopFlightButton   != null) stopFlightButton.setDisable(!flightActive);
+
+        boolean decisionsEnabled = flightActive && linkReady;
+        if (rtlButton    != null) rtlButton.setDisable(!decisionsEnabled);
+        if (holdButton   != null) holdButton.setDisable(!decisionsEnabled);
+        if (resumeButton != null) resumeButton.setDisable(!decisionsEnabled);
+        if (landButton   != null) landButton.setDisable(!decisionsEnabled);
+    }
+
+    private void updateReportDisplay() {
+        if (reportFlightIdLabel != null) reportFlightIdLabel.setText(flightReport.getFlightId());
+        if (reportDurationLabel != null) reportDurationLabel.setText(flightReport.getDurationDisplay());
+        if (reportMaxAltLabel   != null) {
+            double alt = flightReport.getMaxAltitude();
+            reportMaxAltLabel.setText(alt > 0 ? String.format("%.1f m", alt) : "---");
+        }
+        if (reportEventsLabel != null) reportEventsLabel.setText(String.valueOf(flightReport.getEvents().size()));
+    }
+
+    private void setDroneStatus(String text, String hexColor) {
         if (droneStatusLabel == null) return;
         droneStatusLabel.setText(text);
-        droneStatusLabel.setStyle("-fx-background-color: " + hexColor + ";");
+        droneStatusLabel.setStyle("-fx-background-color: " + hexColor + "; -fx-text-fill: white; -fx-padding: 3 6;");
+    }
+
+    private void setTransmitterStatus(String text, String hexColor) {
+        if (transmitterStatusLabel == null) return;
+        transmitterStatusLabel.setText(text);
+        transmitterStatusLabel.setStyle("-fx-background-color: " + hexColor + "; -fx-text-fill: white; -fx-padding: 3 6;");
     }
 
     private void setMissionStatus(String text) {
         if (missionStatusLabel != null) missionStatusLabel.setText(text);
+    }
+
+    private void setFlightStatus(String text) {
+        if (flightStatusLabel != null) flightStatusLabel.setText(text);
     }
 
     private void resetTelemetryDisplay() {
@@ -304,7 +633,12 @@ public class HelloController implements Initializable {
             batteryBar.setProgress(0);
             batteryBar.getStyleClass().removeAll("battery-high", "battery-medium", "battery-low");
         }
-        if (sendMissionButton != null) sendMissionButton.setDisable(true);
+    }
+
+    private void clearCoordinateFields() {
+        for (TextField f : new TextField[]{x1_lat, x1_long, x2_lat, x2_long, x3_lat, x3_long, x4_lat, x4_long}) {
+            if (f != null) f.clear();
+        }
     }
 
     private static void setText(Label label, String value) {

@@ -15,6 +15,10 @@ import java.util.List;
  *   START_MISSION — begin the autonomous search run
  *   ABORT         — halt all autonomous activity immediately
  *   GET_STATUS    — request a one-shot status response
+ *   RTL           — return to launch point
+ *   HOLD          — pause autonomous movement
+ *   RESUME        — resume autonomous movement
+ *   LAND          — initiate landing sequence
  */
 public class DroneRequest {
 
@@ -22,7 +26,11 @@ public class DroneRequest {
         MISSION_AREA,
         START_MISSION,
         ABORT,
-        GET_STATUS
+        GET_STATUS,
+        RTL,
+        HOLD,
+        RESUME,
+        LAND
     }
 
     /** lat/lon pair representing one polygon vertex or waypoint. */

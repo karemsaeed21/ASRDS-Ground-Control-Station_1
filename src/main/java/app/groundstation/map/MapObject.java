@@ -27,7 +27,7 @@ public class MapObject {
             this.clearButton.setOnMouseClicked(event -> this.mapPolygon.clear());
         }
         if (this.drowButton != null) {
-            this.drowButton.setOnMouseClicked(event -> this.mapPolygon.draw());
+            this.drowButton.setOnMouseClicked(event -> drawSearchArea());
         }
         this.mapView.setOnMouseClicked(event -> {
             double x = event.getX();
@@ -66,5 +66,22 @@ public class MapObject {
     public void clearDronePreview() {
         droneMarkerLayer.hide();
         pathLayer.clear();
+    }
+
+    public void drawSearchArea() {
+        mapPolygon.draw();
+    }
+
+    public void clearSearchArea() {
+        mapPolygon.clear();
+    }
+
+    public MapPolygon getMapPolygon() {
+        return mapPolygon;
+    }
+
+    /** Center the map view on the drone position during flight. */
+    public void centerOnDrone(double lat, double lon) {
+        mapView.setCenter(lat, lon);
     }
 }

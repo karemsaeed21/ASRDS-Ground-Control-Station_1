@@ -151,9 +151,23 @@ You can click **Disconnect** and then **Connect** again at any time — the simu
 ## Sending a Mission Area
 
 1. Enter the four corner coordinates of the search polygon in the **Search Area Coordinates** panel (Latitude / Longitude for each point X1–X4), or click **Listen** next to any point and click on the map.
-2. Click **Set Search Area** to draw the polygon on the map.
-3. Once connected (or simulating), click **SEND MISSION AREA** in the right panel.  
+2. Use **Define Square** to create a rectangular search area from two opposite corners (X1 and X2).
+3. Click **Set Search Area** to draw the polygon on the map.
+4. Once connected (or simulating), click **SEND MISSION AREA** in the right panel.  
    The status label changes to `SENT ✓` on success.
+
+---
+
+## Flight Workflow
+
+1. **Connect Transmitter** — serial handshake with device ID `TX001` (use `scripts/transmitter_simulator.py` on a virtual COM pair).
+2. **Connect Drone** (or **Simulate**) — serial handshake with device ID `RPI001`.
+3. **Check Connectivity** — verifies transmitter and drone link; sends `GET_STATUS` ping when connected.
+4. **Start New Flight** — resets flight state and begins a new report session.
+5. Define and **Send Mission Area**.
+6. **Start Flight** — sends `START_MISSION` to the drone; live position and path appear on the map.
+7. During flight, use **Decisions** (RTL, HOLD, RESUME, LAND) or **Stop Flight** (ABORT).
+8. **Export Report** — saves flight summary and path to CSV from the Reports section.
 
 ---
 
@@ -161,11 +175,17 @@ You can click **Disconnect** and then **Connect** again at any time — the simu
 
 | Direction | Message | Description |
 |-----------|---------|-------------|
-| GCS → Drone | `HSH,RPI001` | Handshake initiation |
+| GCS → Transmitter | `HSH,TX001` | Transmitter handshake |
+| Transmitter → GCS | `HSHAC <id>` | Handshake acknowledge |
+| GCS → Drone | `HSH,RPI001` | Drone handshake initiation |
 | Drone → GCS | `HSHAC <id>` | Handshake acknowledge, `<id>` = session integer |
 | Drone → GCS | `POS,lat,lon,alt[,battery]` | Position frame at 115200 baud, newline-terminated |
 | GCS → Drone | `MISSION,<id>,lat1,lon1,...,lat4,lon4` | 4-corner search polygon |
+| GCS → Drone | `START_MISSION,<id>` | Begin autonomous flight |
+| GCS → Drone | `ABORT,<id>` | Stop flight immediately |
+| GCS → Drone | `RTL/HOLD/RESUME/LAND,<id>` | Operator decisions |
 | GCS → Drone | `GET_STATUS,<id>` | One-shot status ping |
+| Drone → GCS | `MISSION_ACK`, `MISSION_STARTED`, `STATUS OK`, `DECISION_ACK` | Responses |
 
 ---
 

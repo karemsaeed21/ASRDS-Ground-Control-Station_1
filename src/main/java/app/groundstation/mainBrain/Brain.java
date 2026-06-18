@@ -16,9 +16,18 @@ public class Brain {
     private final MapObject mapObject;
     private final DroneState droneState = new DroneState();
     private Consumer<DroneState> telemetryListener;
+    private boolean followDrone;
 
     public Brain(MapObject mapObject) {
         this.mapObject = mapObject;
+    }
+
+    public void setFollowDrone(boolean follow) {
+        this.followDrone = follow;
+    }
+
+    public boolean isFollowDrone() {
+        return followDrone;
     }
 
     /**
@@ -45,6 +54,9 @@ public class Brain {
         Platform.runLater(() -> {
             mapObject.updateDronePosition(lat, lon);
             mapObject.updateDronePath(droneState.getPathPoints());
+            if (followDrone) {
+                mapObject.centerOnDrone(lat, lon);
+            }
             if (telemetryListener != null) {
                 telemetryListener.accept(droneState);
             }

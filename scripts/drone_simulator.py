@@ -119,9 +119,40 @@ def main():
     interval = 1.0 / args.rate
     t0 = time.monotonic()
     rx_buf = b""
+    streaming = True
+
+    def handle_commands(text: str) -> bool:
+        nonlocal streaming
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith(HANDSHAKE_PREFIX):
+                continue
+            print(f"[DEVICE] RX: {line}")
+            if line.startswith("GET_STATUS"):
+                ser.write(f"STATUS OK SID={session_id}\n".encode())
+                ser.flush()
+            elif line.startswith("MISSION"):
+                ser.write(f"MISSION_ACK SID={session_id}\n".encode())
+                ser.flush()
+            elif line.startswith("START_MISSION"):
+                ser.write(f"MISSION_STARTED SID={session_id}\n".encode())
+                ser.flush()
+            elif line.startswith("ABORT"):
+                ser.write(f"DECISION_ACK ABORT SID={session_id}\n".encode())
+                ser.flush()
+                streaming = False
+                return False
+            elif line.startswith(("RTL", "HOLD", "RESUME", "LAND")):
+                cmd = line.split(",")[0]
+                ser.write(f"DECISION_ACK {cmd} SID={session_id}\n".encode())
+                ser.flush()
+                if cmd in ("RTL", "LAND"):
+                    streaming = False
+                    return False
+        return True
 
     try:
-        while True:
+        while streaming:
             now = time.monotonic()
             elapsed = now - t0
 
@@ -137,6 +168,8 @@ def main():
                     ser.flush()
                     print(f"Re-handshake replied: {response.strip()}")
                     rx_buf = b""
+                elif not handle_commands(text):
+                    break
 
             if args.moving:
                 # Small circle so the path is visible (~200m radius)

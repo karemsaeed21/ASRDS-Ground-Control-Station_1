@@ -1,39 +1,25 @@
 package app.groundstation.map;
 
-import com.gluonhq.maps.MapLayer;
-import javafx.geometry.Point2D;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-
 /**
- * Map layer that shows the current drone position as a circle (marker).
+ * Data layer that stores the current drone position.
  */
-public class DroneMarkerLayer extends MapLayer {
+public class DroneMarkerLayer {
 
-    private static final double MARKER_RADIUS = 8.0;
-
-    private double lat;
-    private double lon;
+    private double x;
+    private double y;
     private boolean visible;
-    private final Circle circle;
 
     public DroneMarkerLayer() {
-        this.circle = new Circle(MARKER_RADIUS);
-        this.circle.setFill(Color.rgb(255, 50, 50, 0.9));
-        this.circle.setStroke(Color.WHITE);
-        this.circle.setStrokeWidth(2.0);
-        this.circle.setVisible(false);
-        this.getChildren().add(circle);
+        this.visible = false;
     }
 
     /**
      * Set the drone position and show the marker.
      */
-    public void setPosition(double lat, double lon) {
-        this.lat = lat;
-        this.lon = lon;
+    public void setPosition(double x, double y) {
+        this.x = x;
+        this.y = y;
         this.visible = true;
-        this.markDirty();
     }
 
     /**
@@ -41,18 +27,9 @@ public class DroneMarkerLayer extends MapLayer {
      */
     public void hide() {
         this.visible = false;
-        this.markDirty();
     }
 
-    @Override
-    protected void layoutLayer() {
-        if (visible) {
-            Point2D screen = this.getMapPoint(lat, lon);
-            circle.setCenterX(screen.getX());
-            circle.setCenterY(screen.getY());
-            circle.setVisible(true);
-        } else {
-            circle.setVisible(false);
-        }
-    }
+    public double getX() { return x; }
+    public double getY() { return y; }
+    public boolean isVisible() { return visible; }
 }

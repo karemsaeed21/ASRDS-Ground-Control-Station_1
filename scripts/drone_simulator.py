@@ -28,8 +28,8 @@ import time
 BAUD = 115200
 HANDSHAKE_PREFIX = "HSH,"
 HANDSHAKE_RESPONSE = "HSHAC"
-DEFAULT_LAT = 30.417832665779233
-DEFAULT_LON = 30.35480061331367
+DEFAULT_LAT = 500.0
+DEFAULT_LON = 500.0
 DEFAULT_ALT = 100.0
 
 
@@ -172,8 +172,8 @@ def main():
                     break
 
             if args.moving:
-                # Small circle so the path is visible (~200m radius)
-                radius_deg = 0.002
+                # Large circle so the path is visible (150 units radius)
+                radius_deg = 150.0
                 lat = args.lat + radius_deg * math.sin(elapsed * 0.5)
                 lon = args.lon + radius_deg * math.cos(elapsed * 0.5)
                 alt = args.alt + 5.0 * math.sin(elapsed * 0.3)

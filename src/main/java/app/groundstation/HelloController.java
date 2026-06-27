@@ -12,8 +12,7 @@ import app.groundstation.serialCommumication.DroneTelemetryReader;
 import app.groundstation.serialCommumication.HandShake;
 import app.groundstation.serialCommumication.HandShakeResult;
 import app.groundstation.serialCommumication.TransmitterConnection;
-import com.gluonhq.maps.MapPoint;
-import com.gluonhq.maps.MapView;
+import app.groundstation.map.WorldPoint;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -21,7 +20,7 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
@@ -61,7 +60,7 @@ public class HelloController implements Initializable {
     @FXML private Label  connectivityDetailLabel;
 
     // ── Map ───────────────────────────────────────────────────────────────────
-    @FXML private AnchorPane MapContainer;
+    @FXML private StackPane MapContainer;
 
     // ── Telemetry readouts (right panel) ──────────────────────────────────────
     @FXML private Label latValueLabel;
@@ -98,10 +97,10 @@ public class HelloController implements Initializable {
 
     // ── Constants ─────────────────────────────────────────────────────────────
     private static final String DRONE_ID       = "RPI001";
-    private static final double SIM_LAT        = 31.19342;
-    private static final double SIM_LON        = 29.90032;
+    private static final double SIM_LAT        = 500.0;
+    private static final double SIM_LON        = 500.0;
     private static final double SIM_ALT        = 100.0;
-    private static final double SIM_RADIUS_DEG = 0.002;
+    private static final double SIM_RADIUS_DEG = 150.0;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private MapObject              mapObject;
@@ -123,15 +122,8 @@ public class HelloController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        MapView mapView = new MapView();
         MapPolygon polygon = buildPolygon();
-        mapObject = new MapObject(mapView, polygon, DrowButton, ClearButton);
-
-        AnchorPane.setTopAnchor(mapView, 0.0);
-        AnchorPane.setBottomAnchor(mapView, 0.0);
-        AnchorPane.setLeftAnchor(mapView, 0.0);
-        AnchorPane.setRightAnchor(mapView, 0.0);
-        MapContainer.getChildren().add(mapView);
+        mapObject = new MapObject(MapContainer, polygon, DrowButton, ClearButton);
 
         brain = new Brain(mapObject);
         brain.setTelemetryListener(this::onTelemetryUpdate);
@@ -415,11 +407,11 @@ public class HelloController implements Initializable {
             double lat4 = Double.parseDouble(x4_lat.getText().trim());
             double lon4 = Double.parseDouble(x4_long.getText().trim());
 
-            List<MapPoint> area = List.of(
-                new MapPoint(lat1, lon1),
-                new MapPoint(lat2, lon2),
-                new MapPoint(lat3, lon3),
-                new MapPoint(lat4, lon4)
+            List<WorldPoint> area = List.of(
+                new WorldPoint(lon1, lat1),
+                new WorldPoint(lon2, lat2),
+                new WorldPoint(lon3, lat3),
+                new WorldPoint(lon4, lat4)
             );
 
             mapObject.drawSearchArea();
@@ -544,8 +536,8 @@ public class HelloController implements Initializable {
 
     private void onTelemetryUpdate(DroneState state) {
         if (state.hasPosition()) {
-            setText(latValueLabel, String.format("%.6f", state.getCurrentLat()));
-            setText(lonValueLabel, String.format("%.6f", state.getCurrentLon()));
+            setText(latValueLabel, String.format("%.2f", state.getCurrentY()));
+            setText(lonValueLabel, String.format("%.2f", state.getCurrentX()));
             setText(altValueLabel, String.format("%.1f m", state.getCurrentAlt()));
         } else {
             setText(latValueLabel, "---");

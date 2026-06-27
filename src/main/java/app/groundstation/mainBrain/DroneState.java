@@ -1,6 +1,6 @@
 package app.groundstation.mainBrain;
 
-import com.gluonhq.maps.MapPoint;
+import app.groundstation.map.WorldPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,17 +13,17 @@ public class DroneState {
 
     private static final int MAX_PATH_POINTS = 2000;
 
-    private double currentLat;
-    private double currentLon;
+    private double currentX;
+    private double currentY;
     private double currentAlt;
     private int currentBattery = -1;
     private boolean hasPosition;
 
-    private final List<MapPoint> pathPoints = new ArrayList<>();
+    private final List<WorldPoint> pathPoints = new ArrayList<>();
 
-    public void setPosition(double lat, double lon, double alt) {
-        this.currentLat = lat;
-        this.currentLon = lon;
+    public void setPosition(double x, double y, double alt) {
+        this.currentX = x;
+        this.currentY = y;
         this.currentAlt = alt;
         this.hasPosition = true;
     }
@@ -36,19 +36,19 @@ public class DroneState {
         return currentBattery;
     }
 
-    public void addPathPoint(double lat, double lon) {
-        pathPoints.add(new MapPoint(lat, lon));
+    public void addPathPoint(double x, double y) {
+        pathPoints.add(new WorldPoint(x, y));
         if (pathPoints.size() > MAX_PATH_POINTS) {
             pathPoints.remove(0);
         }
     }
 
-    public double getCurrentLat() {
-        return currentLat;
+    public double getCurrentX() {
+        return currentX;
     }
 
-    public double getCurrentLon() {
-        return currentLon;
+    public double getCurrentY() {
+        return currentY;
     }
 
     public double getCurrentAlt() {
@@ -62,7 +62,7 @@ public class DroneState {
     /**
      * Returns an unmodifiable copy of the path for safe use on the FX thread.
      */
-    public List<MapPoint> getPathPoints() {
+    public List<WorldPoint> getPathPoints() {
         return Collections.unmodifiableList(new ArrayList<>(pathPoints));
     }
 

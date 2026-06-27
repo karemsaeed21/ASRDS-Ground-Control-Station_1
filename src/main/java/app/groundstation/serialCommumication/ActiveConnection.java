@@ -1,13 +1,13 @@
 package app.groundstation.serialCommumication;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.gluonhq.maps.MapPoint;
+import app.groundstation.map.WorldPoint;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Manages the serial session after a successful handshake.
+ * Manages the session after a successful handshake.
  * Provides high-level send methods (text command, mission area).
  */
 public class ActiveConnection {
@@ -35,14 +35,14 @@ public class ActiveConnection {
 
     /**
      * Send mission search area as: MISSION,<sessionID>,lat1,lon1,...,lat4,lon4
-     * Points must contain exactly 4 MapPoints (the polygon corners).
+     * Points must contain exactly 4 WorldPoints (the polygon corners).
      */
-    public boolean sendMissionArea(List<MapPoint> points) {
+    public boolean sendMissionArea(List<WorldPoint> points) {
         if (points == null || points.size() < 4) return false;
         StringBuilder sb = new StringBuilder("MISSION,").append(sessionID);
         for (int i = 0; i < 4; i++) {
-            MapPoint p = points.get(i);
-            sb.append(String.format(",%.7f,%.7f", p.getLatitude(), p.getLongitude()));
+            WorldPoint p = points.get(i);
+            sb.append(String.format(",%.7f,%.7f", p.getY(), p.getX())); // Still send as lat (Y), lon (X) to match protocol
         }
         return sendCommand(sb.toString());
     }

@@ -7,12 +7,13 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -24,8 +25,10 @@
    <!-- ═══════════════════════ LEFT: map + bottom strip ═══════════════════════ -->
       <VBox styleClass="bg-hud">
 
-         <!-- Map fills all available vertical space -->
-         <AnchorPane fx:id="MapContainer" VBox.vgrow="ALWAYS" />
+         <!-- Map fills all available vertical space but can be scrolled -->
+         <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" fitToHeight="true" style="-fx-background: transparent; -fx-background-color: transparent;">
+             <StackPane fx:id="MapContainer" />
+         </ScrollPane>
 
          <!-- ─── Bottom strip ────────────────────────────────────────────────── -->
          <HBox styleClass="bg-armored" prefHeight="195.0" spacing="0">
@@ -100,8 +103,8 @@
                <HBox spacing="16" alignment="CENTER_LEFT">
                   <HBox spacing="6" alignment="CENTER_LEFT">
                      <Label styleClass="label-code" text="X1" minWidth="20"><font><Font size="12.0"/></font></Label>
-                     <TextField fx:id="x1_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
-                     <TextField fx:id="x1_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <TextField fx:id="x1_lat"  prefWidth="82" prefHeight="32" promptText="Y (Lat)"  styleClass="text-field" />
+                     <TextField fx:id="x1_long" prefWidth="82" prefHeight="32" promptText="X (Lon)" styleClass="text-field" />
                      <Button fx:id="x1_listen_button" onAction="#setX1ListenMode" prefWidth="60" prefHeight="32" text="Listen">
                         <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
                         <font><Font size="11.0"/></font>
@@ -109,8 +112,8 @@
                   </HBox>
                   <HBox spacing="6" alignment="CENTER_LEFT">
                      <Label styleClass="label-code" text="X2" minWidth="20"><font><Font size="12.0"/></font></Label>
-                     <TextField fx:id="x2_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
-                     <TextField fx:id="x2_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <TextField fx:id="x2_lat"  prefWidth="82" prefHeight="32" promptText="Y (Lat)"  styleClass="text-field" />
+                     <TextField fx:id="x2_long" prefWidth="82" prefHeight="32" promptText="X (Lon)" styleClass="text-field" />
                      <Button fx:id="x2_listen_button" onAction="#setX2ListenMode" prefWidth="60" prefHeight="32" text="Listen">
                         <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
                         <font><Font size="11.0"/></font>
@@ -122,8 +125,8 @@
                <HBox spacing="16" alignment="CENTER_LEFT">
                   <HBox spacing="6" alignment="CENTER_LEFT">
                      <Label styleClass="label-code" text="X3" minWidth="20"><font><Font size="12.0"/></font></Label>
-                     <TextField fx:id="x3_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
-                     <TextField fx:id="x3_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <TextField fx:id="x3_lat"  prefWidth="82" prefHeight="32" promptText="Y (Lat)"  styleClass="text-field" />
+                     <TextField fx:id="x3_long" prefWidth="82" prefHeight="32" promptText="X (Lon)" styleClass="text-field" />
                      <Button fx:id="x3_listen_button" onAction="#setX3ListenMode" prefWidth="60" prefHeight="32" text="Listen">
                         <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
                         <font><Font size="11.0"/></font>
@@ -131,8 +134,8 @@
                   </HBox>
                   <HBox spacing="6" alignment="CENTER_LEFT">
                      <Label styleClass="label-code" text="X4" minWidth="20"><font><Font size="12.0"/></font></Label>
-                     <TextField fx:id="x4_lat"  prefWidth="82" prefHeight="32" promptText="Latitude"  styleClass="text-field" />
-                     <TextField fx:id="x4_long" prefWidth="82" prefHeight="32" promptText="Longitude" styleClass="text-field" />
+                     <TextField fx:id="x4_lat"  prefWidth="82" prefHeight="32" promptText="Y (Lat)"  styleClass="text-field" />
+                     <TextField fx:id="x4_long" prefWidth="82" prefHeight="32" promptText="X (Lon)" styleClass="text-field" />
                      <Button fx:id="x4_listen_button" onAction="#setX4ListenMode" prefWidth="60" prefHeight="32" text="Listen">
                         <styleClass><String fx:value="btn-caution"/><String fx:value="button"/></styleClass>
                         <font><Font size="11.0"/></font>
@@ -171,12 +174,12 @@
             <Region prefHeight="12" />
 
             <HBox styleClass="data-row" alignment="CENTER_LEFT">
-               <Label styleClass="data-key" text="LATITUDE" />
+               <Label styleClass="data-key" text="Y (LAT)" />
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="latValueLabel" styleClass="data-value" text="---" />
             </HBox>
             <HBox styleClass="data-row" alignment="CENTER_LEFT">
-               <Label styleClass="data-key" text="LONGITUDE" />
+               <Label styleClass="data-key" text="X (LON)" />
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="lonValueLabel" styleClass="data-value" text="---" />
             </HBox>

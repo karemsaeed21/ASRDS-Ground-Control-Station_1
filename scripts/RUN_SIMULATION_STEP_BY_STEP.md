@@ -28,7 +28,7 @@ You will see two lines like:
 Open **Terminal 2** and run these commands **one after the other**:
 
 ```bash
-cd /Users/karem/Downloads/ASRDS-Ground-Control-Station-main
+cd /Users/karem/Documents/GitHub/ASRDS-Ground-Control-Station_1
 source scripts/venv/bin/activate
 python3 scripts/drone_simulator.py /dev/ttys029 --moving
 ```
@@ -52,8 +52,8 @@ Opened /dev/ttys029 at 115200 baud. Waiting for handshake (HSH,RPI001)...
 Open **Terminal 3** and run:
 
 ```bash
-cd /Users/karem/Downloads/ASRDS-Ground-Control-Station-main
-mvn javafx:run
+cd /Users/karem/Documents/GitHub/ASRDS-Ground-Control-Station_1
+./mvnw clean javafx:run
 ```
 
 Wait until the Ground Station window opens (map and connection panel).
@@ -97,7 +97,7 @@ In the **Ground Station window**:
 |----------|---------|--------------|
 | 1 | `socat -d -d pty,raw,echo=0 pty,raw,echo=0` | When done (Ctrl+C) |
 | 2 | `cd ... && source scripts/venv/bin/activate && python3 scripts/drone_simulator.py /dev/ttys001 --moving` | When done (Ctrl+C) |
-| 3 | `cd ... && mvn javafx:run` | Close app window |
+| 3 | `cd ... && ./mvnw clean javafx:run` | Close app window |
 
 **If you don’t have a venv yet** (first time only), in the project folder run:
 

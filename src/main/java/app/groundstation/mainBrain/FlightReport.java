@@ -1,6 +1,6 @@
 package app.groundstation.mainBrain;
 
-import com.gluonhq.maps.MapPoint;
+import app.groundstation.map.WorldPoint;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -118,8 +118,8 @@ public class FlightReport {
             sb.append(e).append('\n');
         }
         sb.append('\n').append("path_lat,path_lon\n");
-        for (MapPoint p : state.getPathPoints()) {
-            sb.append(p.getLatitude()).append(',').append(p.getLongitude()).append('\n');
+        for (WorldPoint p : state.getPathPoints()) {
+            sb.append(p.getX()).append(',').append(p.getY()).append('\n');
         }
         Files.writeString(file, sb.toString(), StandardCharsets.UTF_8);
     }

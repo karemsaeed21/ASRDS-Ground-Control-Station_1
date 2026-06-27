@@ -1,0 +1,39 @@
+{
+  "connection": {
+    "mode": "simulation",
+    "host": "127.0.0.1",
+    "port": 5050,
+    "connect_timeout_s": 10,
+    "detection_response_timeout_s": 15,
+    "auto_start_simulator": false,
+    "status_interval_s": 0.2
+  },
+  "mission": {
+    "target_altitude_m": 35,
+    "search_lane_overlap": 0.2,
+    "detection_poll_interval_s": 0.5,
+    "target_precision_m": 1.2,
+    "max_pitch_disturbance": -6.0,
+    "vertical_p_gain": 7.0,
+    "max_yaw_disturbance": 0.7
+  },
+  "detection": {
+    "backend": "ground_truth",
+    "model_path": "models/human_detector.pt",
+    "confidence_threshold": 0.5,
+    "sample_images_dir": "sample_humans",
+    "sample_batch_size": 3,
+    "cooldown_s": 20,
+    "max_range_m": 60
+  },
+  "world": {
+    "x_min": -480.0,
+    "x_max": 480.0,
+    "y_min": -480.0,
+    "y_max": 480.0,
+    "java_coord_max": 1000.0
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}

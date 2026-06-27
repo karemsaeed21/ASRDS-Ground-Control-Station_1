@@ -12,7 +12,10 @@ import app.groundstation.serialCommumication.DroneTelemetryReader;
 import app.groundstation.serialCommumication.HandShake;
 import app.groundstation.serialCommumication.HandShakeResult;
 import app.groundstation.serialCommumication.TransmitterConnection;
+import app.groundstation.network.TcpDroneServer;
+import app.groundstation.network.ServerCallback;
 import app.groundstation.map.WorldPoint;
+import java.util.Optional;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -109,6 +112,7 @@ public class HelloController implements Initializable {
     private DroneTelemetryReader   telemetryReader;
     private TransmitterConnection  transmitterConnection;
     private HandShakeResult        handshakeResult;
+    private TcpDroneServer         tcpDroneServer;
     private FlightReport           flightReport;
     private volatile boolean       droneConnected;
     private volatile boolean       transmitterConnected;
@@ -198,47 +202,81 @@ public class HelloController implements Initializable {
     }
 
     private void connectDrone() {
-        setDroneStatus("Connecting...", "#555555");
+        setDroneStatus("Listening on 5050...", "#555555");
         if (droneConnectButton != null) droneConnectButton.setDisable(true);
+        if (tcpDroneServer != null) tcpDroneServer.stop();
 
-        Task<HandShakeResult> task = new Task<>() {
+        tcpDroneServer = new TcpDroneServer(5050, new ServerCallback() {
             @Override
-            protected HandShakeResult call() throws Exception {
-                return new HandShake().makeHandShake(DRONE_ID);
+            public void onDroneConnected() {
+                Platform.runLater(() -> {
+                    droneConnected = true;
+                    setDroneStatus("Connected", "#2e7d32");
+                    if (droneConnectButton != null) {
+                        droneConnectButton.setText("Disconnect");
+                        droneConnectButton.setDisable(false);
+                    }
+                    flightReport.recordEvent("Drone connected (TCP simulation)");
+                });
             }
-        };
 
-        task.setOnSucceeded(e -> {
-            HandShakeResult result = task.getValue();
-            if (result != null && result.isHandShakeSuccess()) {
-                handshakeResult  = result;
-                activeConnection = new ActiveConnection(result.getSessionID(), result.getPort());
-                telemetryReader  = new DroneTelemetryReader(
-                    result.getPort(),
-                    brain::onPositionReceived,
-                    this::onSerialResponse
-                );
-                telemetryReader.start();
-                droneConnected = true;
-                setDroneStatus("Connected", "#2e7d32");
-                if (droneConnectButton != null) droneConnectButton.setText("Disconnect");
-                flightReport.recordEvent("Drone connected (serial)");
-            } else {
-                setDroneStatus("Disconnected", "#8B0000");
+            @Override
+            public void onDroneDisconnected() {
+                Platform.runLater(() -> {
+                    disconnectDrone();
+                });
             }
-            if (droneConnectButton != null) droneConnectButton.setDisable(false);
-            updateFlightControls();
-        });
 
-        task.setOnFailed(e -> {
-            setDroneStatus("Disconnected", "#8B0000");
-            if (droneConnectButton != null) droneConnectButton.setDisable(false);
-        });
+            @Override
+            public void onSearchAreaRequested() {
+                Platform.runLater(() -> {
+                    setMissionStatus("AWAITING AREA");
+                });
+            }
 
-        new Thread(task).start();
+            @Override
+            public void onStatusReceived(double x, double y, double z, double headingRad, String state) {
+                Platform.runLater(() -> {
+                    brain.onPositionReceived(new PositionUpdate(y, x, z, 0)); // Note: existing uses Y for lat, X for lon
+                    if (altValueLabel != null) altValueLabel.setText(String.format("%.1f m", z));
+                    if (state != null && !state.isEmpty() && flightStatusLabel != null) setFlightStatus(state);
+                });
+            }
+
+            @Override
+            public void onHumanDetected(String messageId, double hX, double hY, double confidence) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("HUMAN DETECTED");
+                    alert.setHeaderText(String.format("Human spotted at X:%.1f Y:%.1f", hX, hY));
+                    alert.setContentText(String.format("Confidence: %.0f%%. What should the drone do?", confidence * 100));
+                    
+                    ButtonType btnContinue = new ButtonType("Continue Search");
+                    ButtonType btnReturn = new ButtonType("Return Home");
+                    alert.getButtonTypes().setAll(btnContinue, btnReturn);
+                    
+                    alert.showAndWait().ifPresent(type -> {
+                        boolean cont = (type == btnContinue);
+                        tcpDroneServer.sendDetectionResponse(messageId, cont);
+                        flightReport.recordEvent("Human detected. Decision: " + (cont ? "Continue" : "RTL"));
+                    });
+                });
+            }
+
+            @Override
+            public void onSearchComplete() {
+                Platform.runLater(() -> {
+                    setFlightStatus("SEARCH COMPLETE");
+                    flightReport.recordEvent("Search complete");
+                });
+            }
+        });
+        
+        tcpDroneServer.start();
     }
 
     private void disconnectDrone() {
+        if (tcpDroneServer != null) { tcpDroneServer.stop(); tcpDroneServer = null; }
         if (telemetryReader != null) { telemetryReader.stop(); telemetryReader = null; }
         if (activeConnection != null) { activeConnection.close(); activeConnection = null; }
         handshakeResult = null;
@@ -246,7 +284,10 @@ public class HelloController implements Initializable {
         if (flightActive) endFlight("DISCONNECTED");
         Platform.runLater(() -> brain.clearDronePreview());
         setDroneStatus("Disconnected", "#8B0000");
-        if (droneConnectButton != null) droneConnectButton.setText("Connect");
+        if (droneConnectButton != null) {
+            droneConnectButton.setText("Connect");
+            droneConnectButton.setDisable(false);
+        }
         if (missionStatusLabel != null) missionStatusLabel.setText("NOT SENT");
         missionSent = false;
         resetTelemetryDisplay();
@@ -261,7 +302,9 @@ public class HelloController implements Initializable {
         detail.append("TX: ").append(transmitterConnected ? "OK" : "OFF");
         detail.append("  |  Drone: ").append(droneConnected || simRunning ? "OK" : "OFF");
 
-        if (activeConnection != null && activeConnection.isActive()) {
+        if (tcpDroneServer != null) {
+            detail.append("  |  TCP Server active");
+        } else if (activeConnection != null && activeConnection.isActive()) {
             activeConnection.requestStatus();
             detail.append("  |  Status ping sent");
             flightReport.recordEvent("Connectivity check — status ping sent");
@@ -416,7 +459,12 @@ public class HelloController implements Initializable {
 
             mapObject.drawSearchArea();
 
-            if (activeConnection != null && activeConnection.isActive()) {
+            if (tcpDroneServer != null) {
+                tcpDroneServer.sendSearchArea(area);
+                setMissionStatus("SENT ✓");
+                missionSent = true;
+                flightReport.setMissionStatus("SENT");
+            } else if (activeConnection != null && activeConnection.isActive()) {
                 boolean ok = activeConnection.sendMissionArea(area);
                 setMissionStatus(ok ? "SENT ✓" : "SEND FAILED");
                 missionSent = ok;
@@ -467,12 +515,16 @@ public class HelloController implements Initializable {
         if (activeConnection != null && activeConnection.isActive()) {
             activeConnection.startMission();
         }
+        // For TCP simulation, the drone takes off automatically after receiving SEARCH_AREA.
+        
         updateFlightControls();
     }
 
     @FXML
     public void stopFlight() {
-        if (activeConnection != null && activeConnection.isActive()) {
+        if (tcpDroneServer != null) {
+            tcpDroneServer.sendAbort();
+        } else if (activeConnection != null && activeConnection.isActive()) {
             activeConnection.abort();
         }
         endFlight("ABORTED");
@@ -496,9 +548,13 @@ public class HelloController implements Initializable {
 
     private void sendDecision(String command) {
         if (!flightActive) return;
-        if (activeConnection != null && activeConnection.isActive()) {
+        
+        if (tcpDroneServer != null && "RTL".equals(command)) {
+            tcpDroneServer.sendAbort();
+        } else if (activeConnection != null && activeConnection.isActive()) {
             activeConnection.sendDecision(command);
         }
+        
         flightReport.recordEvent("Decision sent: " + command);
         if ("LAND".equals(command) || "RTL".equals(command)) {
             endFlight(command);

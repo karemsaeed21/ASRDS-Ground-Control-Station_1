@@ -514,8 +514,9 @@ public class HelloController implements Initializable {
 
         if (activeConnection != null && activeConnection.isActive()) {
             activeConnection.startMission();
+        } else if (tcpDroneServer != null) {
+            tcpDroneServer.sendStartMission();
         }
-        // For TCP simulation, the drone takes off automatically after receiving SEARCH_AREA.
         
         updateFlightControls();
     }

@@ -149,6 +149,12 @@ public class TcpDroneServer {
         out.println(msg.toString());
     }
 
+    public void sendStartMission() {
+        if (out == null) return;
+        JSONObject msg = ProtocolMessage.createEnvelope("START_MISSION", new JSONObject());
+        out.println(msg.toString());
+    }
+
     public void sendAbort() {
         if (out == null) return;
         JSONObject msg = ProtocolMessage.createEnvelope("ABORT", new JSONObject());

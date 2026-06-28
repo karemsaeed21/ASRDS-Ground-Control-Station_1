@@ -136,8 +136,8 @@ class Drone:
         received = {"area": None}
 
         def on_tick():
-            msg = self._receive_message(timeout=0)
-            if msg and msg.type == MessageType.SEARCH_AREA:
+            msg = self._consume_message(MessageType.SEARCH_AREA)
+            if msg:
                 received["area"] = self._java_area_to_world(msg.payload)
                 altitude = msg.payload.get("altitude_m")
                 if altitude is not None:
@@ -148,10 +148,26 @@ class Drone:
         self._logger.info(f"Received search area: {received['area']}")
         return received["area"]
 
+    def wait_for_start_mission(self, timeout: Optional[float] = None):
+        """Blocks until the app sends a START_MISSION message."""
+        self._mission.require(MissionState.AWAITING_SEARCH_AREA)
+        self._mission.transition_to(MissionState.AWAITING_START)
+
+        started = {"value": False}
+
+        def on_tick():
+            msg = self._consume_message(MessageType.START_MISSION)
+            if msg:
+                started["value"] = True
+            return False
+
+        self._spin_until(lambda: started["value"], timeout=timeout, on_tick=on_tick)
+        self._logger.info("Received START_MISSION command.")
+
     def takeoff(self, altitude_m: Optional[float] = None):
         """Climbs to the target altitude (config default, or override) and
         holds there."""
-        self._mission.require(MissionState.AWAITING_SEARCH_AREA)
+        self._mission.require(MissionState.AWAITING_START)
         self._mission.transition_to(MissionState.TAKING_OFF)
         target = altitude_m if altitude_m is not None else self._config.mission.target_altitude_m
         self._flight.takeoff_to(target)
@@ -253,10 +269,11 @@ class Drone:
             if timeout is not None and (self._robot.getTime() - start) > timeout:
                 raise TimeoutError("Timed out waiting for condition.")
 
-    def _receive_message(self, timeout: Optional[float] = None) -> Optional[Message]:
-        if self._message_buffer:
-            return self._message_buffer.pop(0)
-        return self._link.receive(timeout=timeout)
+    def _consume_message(self, msg_type: MessageType) -> Optional[Message]:
+        for i, msg in enumerate(self._message_buffer):
+            if msg.type == msg_type:
+                return self._message_buffer.pop(i)
+        return None
 
     def _maybe_send_status(self):
         if self._link is None or not self._link.is_connected:
@@ -354,8 +371,8 @@ class Drone:
 
         def on_tick():
             self._flight.update()
-            msg = self._receive_message(timeout=0)
-            if msg and msg.type == MessageType.DETECTION_RESPONSE and msg.in_reply_to == detection_msg.id:
+            msg = self._consume_message(MessageType.DETECTION_RESPONSE)
+            if msg and msg.in_reply_to == detection_msg.id:
                 decision["value"] = msg.payload.get("decision")
             return False
 

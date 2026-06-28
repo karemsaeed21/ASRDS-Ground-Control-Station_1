@@ -11,6 +11,7 @@ drone = Drone()
 drone.connect()
 try:
     area = drone.wait_for_search_area()
+    drone.wait_for_start_mission()
     drone.takeoff()
     outcome = drone.search(area)
     drone.return_home()

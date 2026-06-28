@@ -18,6 +18,7 @@ class MissionState(Enum):
     CONNECTING = "CONNECTING"
     CONNECTED = "CONNECTED"
     AWAITING_SEARCH_AREA = "AWAITING_SEARCH_AREA"
+    AWAITING_START = "AWAITING_START"
     TAKING_OFF = "TAKING_OFF"
     AIRBORNE_READY = "AIRBORNE_READY"      # airborne, idle, ready for the next instruction
     SEARCHING = "SEARCHING"
@@ -36,7 +37,8 @@ _ALLOWED_TRANSITIONS = {
     MissionState.DISCONNECTED: {MissionState.CONNECTING},
     MissionState.CONNECTING: {MissionState.CONNECTED, MissionState.ABORTED},
     MissionState.CONNECTED: {MissionState.AWAITING_SEARCH_AREA, MissionState.ABORTED},
-    MissionState.AWAITING_SEARCH_AREA: {MissionState.TAKING_OFF, MissionState.ABORTED},
+    MissionState.AWAITING_SEARCH_AREA: {MissionState.AWAITING_START, MissionState.ABORTED},
+    MissionState.AWAITING_START: {MissionState.TAKING_OFF, MissionState.ABORTED},
     MissionState.TAKING_OFF: {MissionState.AIRBORNE_READY, MissionState.ABORTED},
     MissionState.AIRBORNE_READY: {
         MissionState.SEARCHING, MissionState.RETURNING_HOME, MissionState.ABORTED,

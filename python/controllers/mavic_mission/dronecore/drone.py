@@ -30,7 +30,7 @@ from .detection.fov_oracle import FieldOfViewOracle
 from .detection import build_detector
 from .detection.pipeline import DetectionPipeline
 from .comms import protocol
-from .comms.protocol import MessageType, DetectionDecision
+from .comms.protocol import Message, MessageType, DetectionDecision
 from .comms.mission_link import TcpMissionLink
 
 
@@ -108,6 +108,7 @@ class Drone:
         self._simulator_process: Optional[subprocess.Popen] = None
         self._last_detection_poll_time = float("-inf")
         self._last_status_time = float("-inf")
+        self._message_buffer = []
 
     # ================= public mission API =================
 
@@ -135,7 +136,7 @@ class Drone:
         received = {"area": None}
 
         def on_tick():
-            msg = self._link.receive(timeout=0)
+            msg = self._receive_message(timeout=0)
             if msg and msg.type == MessageType.SEARCH_AREA:
                 received["area"] = self._java_area_to_world(msg.payload)
                 altitude = msg.payload.get("altitude_m")
@@ -231,12 +232,31 @@ class Drone:
             if self._robot.step(self._timestep_ms) == -1:
                 raise ConnectionError("Webots simulation ended while the controller was waiting.")
             self._maybe_send_status()
+
+            if self._link is not None and self._link.is_connected:
+                # Poll for messages to catch ABORT globally
+                msg = self._link.receive(timeout=0)
+                while msg is not None:
+                    if msg.type == MessageType.ABORT:
+                        if self._mission.state not in (MissionState.RETURNING_HOME, MissionState.LANDED, MissionState.ABORTED):
+                            self._logger.warning("ABORT received from ground control, returning home immediately.")
+                            self._execute_return_home()
+                            raise RuntimeError("Mission aborted by user.")
+                    else:
+                        self._message_buffer.append(msg)
+                    msg = self._link.receive(timeout=0)
+
             if on_tick is not None and on_tick():
                 return True
             if condition_fn():
                 return False
             if timeout is not None and (self._robot.getTime() - start) > timeout:
                 raise TimeoutError("Timed out waiting for condition.")
+
+    def _receive_message(self, timeout: Optional[float] = None) -> Optional[Message]:
+        if self._message_buffer:
+            return self._message_buffer.pop(0)
+        return self._link.receive(timeout=timeout)
 
     def _maybe_send_status(self):
         if self._link is None or not self._link.is_connected:
@@ -334,7 +354,7 @@ class Drone:
 
         def on_tick():
             self._flight.update()
-            msg = self._link.receive(timeout=0)
+            msg = self._receive_message(timeout=0)
             if msg and msg.type == MessageType.DETECTION_RESPONSE and msg.in_reply_to == detection_msg.id:
                 decision["value"] = msg.payload.get("decision")
             return False

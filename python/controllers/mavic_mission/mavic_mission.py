@@ -9,7 +9,12 @@ from dronecore import Drone
 
 drone = Drone()
 drone.connect()
-area = drone.wait_for_search_area()
-drone.takeoff()
-outcome = drone.search(area)
-drone.return_home()
+try:
+    area = drone.wait_for_search_area()
+    drone.takeoff()
+    outcome = drone.search(area)
+    drone.return_home()
+except RuntimeError as e:
+    print(f"Simulation ended early: {e}")
+finally:
+    drone.shutdown()
